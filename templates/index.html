@@ -10,23 +10,62 @@
     <meta name="description" content="Rex - Mohsin Raja's digital emotional self. A terminal-style web application that represents Mohsin's inner voice.">
 </head>
 <body>
-    <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="terminal-buttons">
-                <div class="terminal-button close-button"></div>
-                <div class="terminal-button minimize-button"></div>
-                <div class="terminal-button maximize-button"></div>
+    <div class="app-container">
+        <div class="app-nav">
+            <div class="nav-item active" data-view="terminal-view">Chat</div>
+            <div class="nav-item" data-view="reflections-view">Reflections</div>
+        </div>
+        
+        <div class="app-views">
+            <div id="terminal-view" class="app-view active">
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <div class="terminal-buttons">
+                            <div class="terminal-button close-button"></div>
+                            <div class="terminal-button minimize-button"></div>
+                            <div class="terminal-button maximize-button"></div>
+                        </div>
+                        <div class="terminal-title">rex@mohsin-raja: ~/emotional-self</div>
+                    </div>
+                    
+                    <div class="terminal-content">
+                        <!-- Terminal messages will be inserted here by JavaScript -->
+                    </div>
+                    
+                    <div class="terminal-input-container">
+                        <span class="terminal-input-prefix">$</span>
+                        <input type="text" id="terminal-input" class="terminal-input" placeholder="Type your message..." autofocus>
+                    </div>
+                </div>
             </div>
-            <div class="terminal-title">rex@mohsin-raja: ~/emotional-self</div>
-        </div>
-        
-        <div class="terminal-content">
-            <!-- Terminal messages will be inserted here by JavaScript -->
-        </div>
-        
-        <div class="terminal-input-container">
-            <span class="terminal-input-prefix">$</span>
-            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type your message..." autofocus>
+            
+            <div id="reflections-view" class="app-view">
+                <div class="reflections-container">
+                    <div class="reflections-header">
+                        <h2>Mohsin's Reflections</h2>
+                        <div class="reflections-tabs">
+                            <div class="reflections-tab active" data-type="microblog">Microblogs</div>
+                            <div class="reflections-tab" data-type="story">Stories</div>
+                        </div>
+                    </div>
+                    
+                    <div class="reflections-content">
+                        <div id="reflections-list" class="reflection-grid">
+                            <!-- Reflections will be loaded here -->
+                            <div class="reflection-card skeleton">
+                                <div class="skeleton-title"></div>
+                                <div class="skeleton-content"></div>
+                                <div class="skeleton-date"></div>
+                            </div>
+                            <div class="reflection-card skeleton">
+                                <div class="skeleton-title"></div>
+                                <div class="skeleton-content"></div>
+                                <div class="skeleton-date"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     

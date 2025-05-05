@@ -164,7 +164,9 @@ def manage_settings(current_user):
 @token_required
 def manage_reflections(current_user):
     if request.method == 'GET':
-        reflections = supabase.get_reflections()
+        # Check if we're filtering by type
+        reflection_type = request.args.get('type')
+        reflections = supabase.get_reflections(reflection_type)
         return jsonify(reflections)
     elif request.method == 'POST':
         data = request.json
@@ -178,6 +180,13 @@ def manage_reflections(current_user):
         reflection_id = request.args.get('id')
         supabase.delete_reflection(reflection_id)
         return jsonify({'success': True})
+        
+@app.route('/api/reflections/public', methods=['GET'])
+def get_public_reflections():
+    """Get published reflections for public viewing"""
+    reflection_type = request.args.get('type')
+    reflections = supabase.get_public_reflections(reflection_type)
+    return jsonify(reflections)
         
 @app.route('/logout', methods=['POST'])
 def logout():

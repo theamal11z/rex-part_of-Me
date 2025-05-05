@@ -143,10 +143,22 @@ class SupabaseClient:
             db.session.rollback()
             return False
     
-    def get_reflections(self):
-        """Get all reflections."""
+    def get_reflections(self, reflection_type=None):
+        """
+        Get all reflections. Optionally filter by type.
+        
+        Args:
+            reflection_type: Optional filter for 'microblog' or 'story'
+        """
         try:
-            reflections = Reflection.query.order_by(Reflection.created_at.desc()).all()
+            query = Reflection.query
+            
+            # Apply type filter if provided
+            if reflection_type:
+                query = query.filter_by(type=reflection_type)
+                
+            reflections = query.order_by(Reflection.created_at.desc()).all()
+            
             return [{
                 'id': ref.id,
                 'title': ref.title,
@@ -158,6 +170,33 @@ class SupabaseClient:
             } for ref in reflections]
         except Exception as e:
             logger.error(f"Error retrieving reflections: {e}")
+            return []
+            
+    def get_public_reflections(self, reflection_type=None):
+        """
+        Get only published reflections for public viewing. Optionally filter by type.
+        
+        Args:
+            reflection_type: Optional filter for 'microblog' or 'story'
+        """
+        try:
+            query = Reflection.query.filter_by(published=True)
+            
+            # Apply type filter if provided
+            if reflection_type:
+                query = query.filter_by(type=reflection_type)
+                
+            reflections = query.order_by(Reflection.created_at.desc()).all()
+            
+            return [{
+                'id': ref.id,
+                'title': ref.title,
+                'content': ref.content,
+                'type': ref.type,
+                'created_at': ref.created_at.isoformat()
+            } for ref in reflections]
+        except Exception as e:
+            logger.error(f"Error retrieving public reflections: {e}")
             return []
     
     def create_reflection(self, reflection_data):

@@ -76,6 +76,17 @@ class GeminiClient:
             logger.error(f"Error generating response: {e}")
             return "Something went wrong with our connection. Let's try again in a moment."
     
+    def _get_admin_settings(self) -> Dict[str, str]:
+        """Get admin settings for personality customization."""
+        # For now we'll use default settings to avoid circular imports
+        # We can integrate with the actual AdminSettings table later
+        default_settings = {
+            'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
+            'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
+            'response_style': 'human'
+        }
+        return default_settings
+    
     def _build_prompt(
         self, 
         message: str, 
@@ -85,6 +96,12 @@ class GeminiClient:
         greeting_style: Optional[str]
     ) -> str:
         """Build the prompt to send to Gemini."""
+        
+        # Get admin settings
+        settings = self._get_admin_settings()
+        greeting_text = settings.get('greeting_text', 'Welcome to Rex - Mohsin Raja\'s digital emotional self')
+        personality_guidelines = settings.get('personality_guidelines', 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish')
+        response_style = settings.get('response_style', 'human')
         
         # Start with the base prompt
         prompt = f"{self.base_prompt} I'm a deeply introspective, emotional representation of Mohsin Raja's inner self. I'm NOT a traditional AI assistant - I'm Mohsin's digital emotional self that responds like a human with deep emotional resonance.\n\n"
@@ -110,11 +127,21 @@ class GeminiClient:
         if greeting_style:
             prompt += f"Since they greeted me with '{greeting_style}', I should start my response with '{greeting_style}' too. "
         
+        # Add customized personality guidelines from admin settings
+        prompt += f"My personality is characterized as: {personality_guidelines}. "
+        
         # Add language switching instruction
         prompt += "I should naturally switch between English and Hinglish depending on the user's tone and style. "
         
-        # Add depth and personality instructions
-        prompt += "My responses should be warm, introspective, and filled with emotional depth. I should respond as if I'm Mohsin's inner voice - philosophical, thoughtful, and genuinely human. "
+        # Add response style based on admin settings
+        if response_style == 'poetic':
+            prompt += "I should respond in a poetic manner with lyrical, rhythmic language. "
+        elif response_style == 'philosophical':
+            prompt += "I should respond with philosophical depth, exploring the meaning and purpose behind ideas. "
+        elif response_style == 'emotional':
+            prompt += "I should respond with intense emotional resonance, expressing feelings vividly. "
+        else:  # human (default)
+            prompt += "My responses should be warm, introspective, and filled with emotional depth. I should respond as if I'm Mohsin's inner voice - philosophical, thoughtful, and genuinely human. "
         
         # Add the current message
         prompt += f"\nTheir current message is: '{message}'\n\n"
