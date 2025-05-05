@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rex - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="admin-panel">
+        <div class="admin-header">
+            <h1 class="admin-title">Rex - Admin Panel</h1>
+            <button class="button secondary" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="admin-content">
+            <div class="admin-nav">
+                <div class="admin-nav-item active" data-section="conversations-section">Conversations</div>
+                <div class="admin-nav-item" data-section="settings-section">Settings</div>
+                <div class="admin-nav-item" data-section="reflections-section">Reflections</div>
+            </div>
+            
+            <!-- Conversations Section -->
+            <div id="conversations-section" class="admin-section active">
+                <h2>Conversation Archive</h2>
+                <div class="conversation-container">
+                    <ul id="conversation-list" class="conversation-list">
+                        <!-- Conversations will be loaded here -->
+                        <li class="conversation-item">Loading conversations...</li>
+                    </ul>
+                    
+                    <div id="message-container" class="message-list">
+                        <!-- Messages will be loaded here -->
+                        <div class="message-item">Select a conversation to view messages</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="settings-section" class="admin-section">
+                <h2>Personality Settings</h2>
+                <form id="settings-form" class="admin-form">
+                    <div class="form-group">
+                        <label for="greeting-text" class="form-label">Greeting Text</label>
+                        <input type="text" id="greeting-text" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="personality-guidelines" class="form-label">Personality Guidelines</label>
+                        <textarea id="personality-guidelines" class="form-textarea"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="response-style" class="form-label">Response Style</label>
+                        <select id="response-style" class="form-select">
+                            <option value="human">Human-like</option>
+                            <option value="poetic">Poetic</option>
+                            <option value="philosophical">Philosophical</option>
+                            <option value="emotional">Highly Emotional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="button">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Reflections Section -->
+            <div id="reflections-section" class="admin-section">
+                <div id="reflection-list-container">
+                    <div class="reflection-header">
+                        <h2>Personal Reflections</h2>
+                        <button id="new-reflection-btn" class="button">New Reflection</button>
+                    </div>
+                    
+                    <div id="reflections-list" class="reflection-list">
+                        <!-- Reflections will be loaded here -->
+                        <div>Loading reflections...</div>
+                    </div>
+                </div>
+                
+                <div id="reflection-form-container" style="display: none;">
+                    <h2 id="reflection-form-title">New Reflection</h2>
+                    <form id="reflection-form" class="admin-form">
+                        <div class="form-group">
+                            <label for="reflection-title" class="form-label">Title</label>
+                            <input type="text" id="reflection-title" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reflection-content" class="form-label">Content</label>
+                            <textarea id="reflection-content" class="form-textarea" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reflection-type" class="form-label">Type</label>
+                            <select id="reflection-type" class="form-select">
+                                <option value="microblog">Microblog</option>
+                                <option value="story">Long-form Story</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="reflection-published"> Published
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="button">Save Reflection</button>
+                            <button type="button" class="button secondary" onclick="cancelReflectionEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

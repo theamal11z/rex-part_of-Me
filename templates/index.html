@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rex - Mohsin Raja's Digital Emotional Self</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta name="description" content="Rex - Mohsin Raja's digital emotional self. A terminal-style web application that represents Mohsin's inner voice.">
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <div class="terminal-button close-button"></div>
+                <div class="terminal-button minimize-button"></div>
+                <div class="terminal-button maximize-button"></div>
+            </div>
+            <div class="terminal-title">rex@mohsin-raja: ~/emotional-self</div>
+        </div>
+        
+        <div class="terminal-content">
+            <!-- Terminal messages will be inserted here by JavaScript -->
+        </div>
+        
+        <div class="terminal-input-container">
+            <span class="terminal-input-prefix">$</span>
+            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type your message..." autofocus>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <a href="https://instagram.com/theamal11x" target="_blank" class="social-link">
+            <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://twitter.com/theamal11x" target="_blank" class="social-link">
+            <i class="fab fa-twitter"></i>
+        </a>
+        <a href="mailto:theamal11x@gmail.com" class="social-link">
+            <i class="fas fa-envelope"></i>
+        </a>
+    </footer>
+    
+    <!-- Admin Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Admin Access</h2>
+            <form id="login-form" class="admin-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="button">Login</button>
+                    <button type="button" class="button secondary" onclick="closeLoginModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+</body>
+</html>
