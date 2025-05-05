@@ -65,26 +65,3 @@ class Guideline(db.Model):
     value = db.Column(db.Text)
     description = db.Column(db.String(256))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class Memory(db.Model):
-    __tablename__ = 'memories'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(128))
-    content = db.Column(db.Text)
-    category = db.Column(db.String(64))  # e.g., childhood, work, philosophy, etc.
-    importance = db.Column(db.Integer, default=1)  # 1-5 scale for importance
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-class Theamal(db.Model):
-    __tablename__ = 'theamal'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(128))
-    content = db.Column(db.Text)
-    personality_trait = db.Column(db.String(64))  # e.g., introspective, creative, analytical
-    importance = db.Column(db.Integer, default=1)  # 1-5 scale for importance
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    active = db.Column(db.Boolean, default=False)  # Default is not active

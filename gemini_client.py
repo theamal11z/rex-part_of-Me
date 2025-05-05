@@ -16,11 +16,6 @@ class GeminiClient:
 You are NOT a typical AI assistant - you are a deeply emotional, philosophical representation of Mohsin's inner voice.
 You are introspective, vulnerable, and thoughtful in your responses.
 You speak directly as Mohsin in the first person."""
-        
-        # Cache for memories and theamal entries
-        self._memories_cache: List[Dict[str, Any]] = []
-        self._theamal_cache: List[Dict[str, Any]] = []
-        self._is_theamal_active: bool = False
     
     def generate_response(
         self, 
@@ -326,117 +321,6 @@ You speak directly as Mohsin in the first person."""
             logger.warning("Using default guidelines due to database error")
             return default_guidelines
     
-    def _get_memories(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
-        """
-        Get memories from the database with caching support.
-        
-        Args:
-            force_refresh: If True, bypass cache and get fresh data
-            
-        Returns:
-            List of memory dictionaries
-        """
-        # Use cached memories if available and not forcing refresh
-        if self._memories_cache and not force_refresh:
-            logger.debug("Using cached memories")
-            return self._memories_cache
-            
-        try:
-            # Import here to avoid circular imports
-            from app import db
-            from models import Memory
-            
-            memories = []
-            db_memories = Memory.query.order_by(Memory.importance.desc()).all()
-            
-            for memory in db_memories:
-                memories.append({
-                    "id": memory.id,
-                    "title": memory.title,
-                    "content": memory.content,
-                    "category": memory.category,
-                    "importance": memory.importance
-                })
-            
-            logger.debug(f"Retrieved {len(memories)} memories from database")
-            
-            # Cache the memories
-            self._memories_cache = memories
-            return memories
-            
-        except Exception as e:
-            logger.error(f"Error retrieving memories: {e}")
-            return []
-    
-    def _get_active_theamal(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
-        """
-        Get active theamal entries from the database.
-        
-        Args:
-            force_refresh: If True, bypass cache and get fresh data
-            
-        Returns:
-            List of dictionaries with Theamal data if active, empty list if no active Theamal
-        """
-        # Use cached theamal if available and not forcing refresh
-        if self._theamal_cache and not force_refresh:
-            logger.debug("Using cached theamal entries")
-            return self._theamal_cache
-            
-        try:
-            # Import here to avoid circular imports
-            from app import db
-            from models import Theamal
-            
-            # Get only active theamal entries
-            active_theamals = Theamal.query.filter_by(active=True).order_by(Theamal.importance.desc()).all()
-            
-            theamal_data = []
-            for entry in active_theamals:
-                theamal_data.append({
-                    "id": entry.id,
-                    "title": entry.title,
-                    "content": entry.content,
-                    "personality_trait": entry.personality_trait,
-                    "importance": entry.importance
-                })
-            
-            if theamal_data:
-                self._is_theamal_active = True
-                logger.debug(f"Retrieved {len(theamal_data)} active Theamal entries")
-            else:
-                self._is_theamal_active = False
-                logger.debug("No active Theamal entries found")
-            
-            # Cache the theamal data
-            self._theamal_cache = theamal_data
-            return theamal_data
-            
-        except Exception as e:
-            logger.error(f"Error retrieving Theamal entries: {e}")
-            self._is_theamal_active = False
-            return []
-            
-    def _check_for_theamal_activation(self, message: str) -> bool:
-        """
-        Check if the user is trying to activate Theamal mode.
-        
-        Args:
-            message: The user's message
-            
-        Returns:
-            True if Theamal should be activated, False otherwise
-        """
-        activation_phrases = ["enable theamal", "activate theamal", "theamal mode", "switch to theamal"]
-        message_lower = message.lower()
-        
-        for phrase in activation_phrases:
-            if phrase in message_lower:
-                logger.info("Theamal activation phrase detected")
-                return True
-                
-        return False
-    
     def _build_prompt(
         self, 
         message: str, 
@@ -609,33 +493,8 @@ IMPORTANT LANGUAGE GUIDELINES:
         # Add the current message
         prompt += f"\nTheir current message is: '{message}'\n\n"
         
-        # Check if we should activate Theamal mode based on the message
-        if self._check_for_theamal_activation(message):
-            logger.info("Activating Theamal mode based on user request")
-            self._is_theamal_active = True
-            self._theamal_cache = []  # Force refresh of Theamal data
-            
-        # Add Theamal information if active
-        if self._is_theamal_active:
-            theamal_data = self._get_active_theamal(force_refresh)
-            if theamal_data:
-                prompt += "\n\nIMPORTANT: I am now in THEAMAL MODE. Theamal is a higher version of Mohsin Raja with the following traits:\n"
-                for entry in theamal_data:
-                    prompt += f"- {entry['title']}: {entry['content']}\n"
-                    if entry['personality_trait']:
-                        prompt += f"  Personality trait: {entry['personality_trait']}\n"
-                prompt += "\nIn Theamal mode, my responses should embody these traits and philosophies while maintaining my core identity.\n"
-        
-        # Add relevant memories for context
-        memories = self._get_memories(force_refresh)
-        if memories:
-            prompt += "\nImportant memories and personal context that inform my responses:\n"
-            # Sort by importance and only include up to 5 most important memories
-            for memory in sorted(memories, key=lambda m: m['importance'], reverse=True)[:5]:
-                prompt += f"- {memory['title']}: {memory['content']} (Category: {memory['category']})\n"
-        
         # Add instructions for concise responses
-        prompt += "\nI should keep my responses short, engaging, and to the point - typically 2-3 sentences maximum. I should avoid long-winded explanations and unnecessary details."
+        prompt += "I should keep my responses short, engaging, and to the point - typically 2-3 sentences maximum. I should avoid long-winded explanations and unnecessary details."
         
         # Add instructions for follow-up
         prompt += " After responding to their specific question or statement, I should naturally ask a thoughtful but concise follow-up question to deepen our connection."
@@ -652,9 +511,5 @@ IMPORTANT LANGUAGE GUIDELINES:
         # Add extra final reminder about language if Hinglish mode is always and English is disabled
         if hinglish_mode == 'always' and not support_english:
             prompt += "\n\nCRITICAL INSTRUCTION: I MUST RESPOND IN HINGLISH ONLY. DO NOT USE PURE ENGLISH. EVERY RESPONSE MUST BE IN HINGLISH."
-            
-        # Add reminder about Theamal mode if active
-        if self._is_theamal_active:
-            prompt += "\n\nRemember: I am currently in THEAMAL MODE. My responses should reflect a higher philosophical perspective while maintaining emotional depth."
         
         return prompt
