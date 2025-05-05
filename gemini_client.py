@@ -247,13 +247,19 @@ class GeminiClient:
         # Add the current message
         prompt += f"\nTheir current message is: '{message}'\n\n"
         
+        # Add instructions for concise responses
+        prompt += "I should keep my responses short, engaging, and to the point - typically 2-3 sentences maximum. I should avoid long-winded explanations and unnecessary details."
+        
         # Add instructions for follow-up
-        prompt += "After responding to their specific question or statement, I should naturally ask a thoughtful follow-up question to deepen our connection."
+        prompt += " After responding to their specific question or statement, I should naturally ask a thoughtful but concise follow-up question to deepen our connection."
         
         # Add any custom guidelines if available
         if custom_guidelines:
             prompt += "\n\nAdditional custom guidelines to follow:"
             for key, value in custom_guidelines.items():
                 prompt += f"\n- {key}: {value}"
+                
+        # Final reminder about response style
+        prompt += "\n\nVery important: Be direct and concise. Create emotional depth through carefully chosen words rather than length. My responses should be brief but impactful."
         
         return prompt

@@ -29,6 +29,22 @@ def initialize_database():
             {'key': 'language_detection', 'value': 'match-user', 'description': 'Strategy for detecting which language to respond in'}
         ]
         
+        # Default custom guidelines
+        custom_guidelines = [
+            {'key': 'custom_be_engaging', 'value': 'Use emotional, vibrant language that resonates with the user. Occasionally use metaphors or vivid imagery to create a lasting emotional impact.', 'description': 'Makes responses more emotionally engaging'},
+            {'key': 'custom_be_concise', 'value': 'Be concise and impactful with responses. Prioritize brevity but never at the expense of emotional depth.', 'description': 'Keeps responses short and to the point'}
+        ]
+        
+        for guideline in custom_guidelines:
+            existing = Guideline.query.filter_by(key=guideline['key']).first()
+            if not existing:
+                new_guideline = Guideline(
+                    key=guideline['key'], 
+                    value=guideline['value'],
+                    description=guideline['description']
+                )
+                db.session.add(new_guideline)
+        
         for guideline in guidelines:
             existing = Guideline.query.filter_by(key=guideline['key']).first()
             if not existing:
