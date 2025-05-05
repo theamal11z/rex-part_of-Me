@@ -77,7 +77,7 @@ class GeminiClient:
             return "Something went wrong with our connection. Let's try again in a moment."
     
     def _get_admin_settings(self) -> Dict[str, str]:
-        """Get admin settings for personality customization."""
+        """Get admin settings for personality customization from database."""
         try:
             # Import here to avoid circular imports
             from app import db
@@ -87,27 +87,16 @@ class GeminiClient:
             admin_settings = AdminSetting.query.all()
             for setting in admin_settings:
                 settings[setting.key] = setting.value
-                
-            if not settings:
-                # Default settings if none found in database
-                settings = {
-                    'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
-                    'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
-                    'response_style': 'human'
-                }
             
+            # Log what was retrieved from database
+            logger.debug(f"Retrieved admin settings from database: {settings}")
             return settings
         except Exception as e:
             logger.error(f"Error getting admin settings: {e}")
-            # Fallback to default settings
-            return {
-                'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
-                'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
-                'response_style': 'human'
-            }
+            return {}
             
     def _get_language_guidelines(self) -> Dict[str, Any]:
-        """Get language guidelines for Hinglish support."""
+        """Get language guidelines for Hinglish support from database."""
         try:
             # Import here to avoid circular imports
             from app import db
@@ -119,39 +108,30 @@ class GeminiClient:
             for guideline in db_guidelines:
                 try:
                     # Try to parse JSON values
-                    if guideline.value.startswith('{') or guideline.value.startswith('['):
+                    if guideline.value and (guideline.value.startswith('{') or guideline.value.startswith('[')):
                         guidelines[guideline.key] = json.loads(guideline.value)
                     else:
-                        guidelines[guideline.key] = guideline.value
-                except:
-                    # If not valid JSON, store as string
+                        # Convert boolean strings to actual booleans
+                        if guideline.value == 'true':
+                            guidelines[guideline.key] = True
+                        elif guideline.value == 'false':
+                            guidelines[guideline.key] = False
+                        # Convert numeric strings to integers
+                        elif guideline.value and guideline.value.isdigit():
+                            guidelines[guideline.key] = int(guideline.value)
+                        else:
+                            guidelines[guideline.key] = guideline.value
+                except Exception as parse_error:
+                    logger.error(f"Error parsing guideline value: {parse_error}")
+                    # If parsing fails, store as string
                     guidelines[guideline.key] = guideline.value
-                    
-            if not guidelines:
-                # Default guidelines if none found in database
-                guidelines = {
-                    'hinglish_mode': 'auto',
-                    'hinglish_phrases': 'Kya baat hai!, Theek hai, Acha, Bohot badhiya, Samajh gaya',
-                    'hinglish_ratio': 50,
-                    'support_english': True,
-                    'support_hindi': True,
-                    'support_hinglish': True,
-                    'language_detection': 'match-user'
-                }
             
+            # Log what was retrieved from database
+            logger.debug(f"Retrieved language guidelines from database: {guidelines}")
             return guidelines
         except Exception as e:
             logger.error(f"Error getting language guidelines: {e}")
-            # Fallback to default guidelines
-            return {
-                'hinglish_mode': 'auto',
-                'hinglish_phrases': 'Kya baat hai!, Theek hai, Acha, Bohot badhiya, Samajh gaya',
-                'hinglish_ratio': 50,
-                'support_english': True,
-                'support_hindi': True,
-                'support_hinglish': True,
-                'language_detection': 'match-user'
-            }
+            return {}
     
     def _build_prompt(
         self, 

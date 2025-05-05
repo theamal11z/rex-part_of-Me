@@ -289,7 +289,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('reflection-type').value = 'microblog';
         document.getElementById('reflection-published').checked = false;
         document.getElementById('reflection-form-title').textContent = 'New Reflection';
+        
+        // Display the form container and hide the list container
+        document.getElementById('reflection-list-container').style.display = 'none';
+        document.getElementById('reflection-form-container').style.display = 'block';
     };
+    
+    // Button event listeners
+    document.getElementById('new-reflection-btn').addEventListener('click', window.newReflection);
     
     // Edit reflection
     window.editReflection = async function(id) {
@@ -390,12 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('reflection-form-container').style.display = 'none';
     };
     
-    // Show the reflection form when clicking the "New Reflection" button
-    document.getElementById('new-reflection-btn').addEventListener('click', function() {
-        newReflection();
-        document.getElementById('reflection-list-container').style.display = 'none';
-        document.getElementById('reflection-form-container').style.display = 'block';
-    });
+    // Cancel reflection edit button listener
+    document.querySelector('.button.secondary[onclick="cancelReflectionEdit()"]').addEventListener('click', cancelReflectionEdit);
     
     // Logout
     window.logout = function() {
