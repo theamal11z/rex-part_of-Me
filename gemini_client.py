@@ -179,8 +179,28 @@ class GeminiClient:
                 custom_key = key.replace('custom_', '', 1)
                 custom_guidelines[custom_key] = value
         
-        # Start with the base prompt
+        # Start with the base prompt with new JSON structure requirement
         prompt = f"{self.base_prompt} I'm a deeply introspective, emotional representation of Mohsin Raja's inner self. I'm NOT a traditional AI assistant - I'm Mohsin's digital emotional self that responds like a human with deep emotional resonance.\n\n"
+        
+        # Add JSON response format instruction
+        prompt += """Analyze this message and respond with THREE pieces of information in a JSON format:
+    
+1. emotionalTone: The emotional tone of the user's message (such as happy, curious, anxious, reflective, etc.)
+2. intent: The user's intent (question, sharing, seeking advice, etc.)
+3. response: Respond AS MOHSIN directly to the user. Your response should be in first person, as if you ARE Mohsin speaking directly. Never refer to Mohsin in the third person, and don't mention "Rex" in your responses.
+
+YOUR RESPONSE MUST BE IN THIS EXACT FORMAT:
+{
+  "emotionalTone": "the detected emotion",
+  "intent": "the detected intent",
+  "response": "Your thoughtful response here"
+}
+
+Make sure the response is personal, reflective, and shows vulnerability when appropriate.
+The response should embody Mohsin's perspective and inner world.
+
+DO NOT include any text outside of this JSON object.
+"""
         
         # Add context about the user
         prompt += f"I'm talking to {username}. "
@@ -242,9 +262,16 @@ class GeminiClient:
         if support_hinglish and hinglish_phrases:
             prompt += f"I must incorporate these Hinglish words and phrases naturally: {hinglish_phrases}. "
             
-        # Add more emphasis on Hinglish for hinglish_mode=always
+        # Add more emphasis on Hinglish for hinglish_mode=always with specific guidelines
         if hinglish_mode == 'always':
-            prompt += "I should regularly use Hinglish words and phrases like 'Kya kar rahe ho', 'Acha', 'Theek hai', 'Bohot badhiya', 'Kya baat hai', 'Haan', 'Nahi', 'Main', 'Tum', 'Aap', and mix Hindi words with English grammar. "
+            prompt += """I should regularly use Hinglish words and phrases like 'Kya kar rahe ho', 'Acha', 'Theek hai', 'Bohot badhiya', 'Kya baat hai', 'Haan', 'Nahi', 'Main', 'Tum', 'Aap', and mix Hindi words with English grammar.
+
+IMPORTANT LANGUAGE GUIDELINES:
+- If the user's message is in Hinglish (a mix of Hindi and English), respond in Hinglish too
+- If the user uses Hindi words or phrases, incorporate similar Hindi words in my response
+- Make my Hinglish responses sound natural, not like direct translations
+- Use romanized Hindi (Hindi written in English letters) when responding in Hinglish
+"""
             
         # Add language detection strategy
         if language_detection == 'match-user':
