@@ -746,3 +746,191 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Load theamal entries
+    async function loadTheamal() {
+        try {
+            const response = await fetch("/api/theamal");
+            const entries = await response.json();
+            
+            // Clear the list
+            theamalList.innerHTML = "";
+            
+            if (entries.length === 0) {
+                theamalList.innerHTML = "<div>No Theamal entries found</div>";
+                return;
+            }
+            
+            // Add each entry
+            entries.forEach(entry => {
+                const div = document.createElement("div");
+                div.className = "reflection-card" + (entry.active ? " active-theamal" : "");
+                
+                const date = new Date(entry.updated_at).toLocaleDateString();
+                
+                div.innerHTML = `
+                    <div class="reflection-title">${entry.title}</div>
+                    <div class="reflection-meta">
+                        <div>${entry.personality_trait} • Importance: ${entry.importance}</div>
+                        <div>${date}</div>
+                        <div>${entry.active ? "<span class=\"active-indicator\">Active</span>" : "Inactive"}</div>
+                    </div>
+                    <div class="reflection-content">${entry.content.substring(0, 100)}${entry.content.length > 100 ? "..." : ""}</div>
+                    <div class="reflection-actions">
+                        <button class="button" onclick="editTheamal(${entry.id})">Edit</button>
+                        <button class="button ${entry.active ? "secondary" : "primary"}" 
+                                onclick="toggleTheamalActive(${entry.id}, ${!entry.active})">
+                            ${entry.active ? "Deactivate" : "Activate"}
+                        </button>
+                        <button class="button danger" onclick="deleteTheamal(${entry.id})">Delete</button>
+                    </div>
+                `;
+                
+                theamalList.appendChild(div);
+            });
+        } catch (error) {
+            console.error("Error loading Theamal entries:", error);
+            theamalList.innerHTML = "<div>Error loading Theamal entries</div>";
+        }
+    }
+    
+    // New theamal entry
+    window.newTheamal = function() {
+        currentTheamalId = null;
+        document.getElementById("theamal-title").value = "";
+        document.getElementById("theamal-content").value = "";
+        document.getElementById("theamal-trait").value = "introspective";
+        document.getElementById("theamal-importance").value = 3;
+        document.getElementById("theamal-importance-value").textContent = "3";
+        document.getElementById("theamal-active").checked = false;
+        document.getElementById("theamal-form-title").textContent = "New Theamal Entry";
+        
+        // Display the form container and hide the list container
+        document.getElementById("theamal-list-container").style.display = "none";
+        document.getElementById("theamal-form-container").style.display = "block";
+    };
+    
+    // Button event listeners
+    document.getElementById("new-theamal-btn").addEventListener("click", window.newTheamal);
+    
+    // Edit theamal entry
+    window.editTheamal = async function(id) {
+        try {
+            const response = await fetch("/api/theamal");
+            const entries = await response.json();
+            
+            const entry = entries.find(e => e.id === id);
+            
+            if (entry) {
+                currentTheamalId = entry.id;
+                document.getElementById("theamal-title").value = entry.title;
+                document.getElementById("theamal-content").value = entry.content;
+                document.getElementById("theamal-trait").value = entry.personality_trait;
+                document.getElementById("theamal-importance").value = entry.importance;
+                document.getElementById("theamal-importance-value").textContent = entry.importance;
+                document.getElementById("theamal-active").checked = entry.active;
+                document.getElementById("theamal-form-title").textContent = "Edit Theamal Entry";
+                
+                // Display the form container and hide the list container
+                document.getElementById("theamal-list-container").style.display = "none";
+                document.getElementById("theamal-form-container").style.display = "block";
+            }
+        } catch (error) {
+            console.error("Error loading Theamal entry for edit:", error);
+            alert("Error loading Theamal entry for edit");
+        }
+    };
+    
+    // Toggle Theamal activation
+    window.toggleTheamalActive = async function(id, active) {
+        try {
+            const response = await fetch(`/api/theamal/${id}/activate`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ active })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                loadTheamal();
+            } else {
+                alert("Error updating Theamal activation status");
+            }
+        } catch (error) {
+            console.error("Error updating Theamal activation status:", error);
+            alert("Error updating Theamal activation status");
+        }
+    };
+    
+    // Delete theamal entry
+    window.deleteTheamal = async function(id) {
+        if (confirm("Are you sure you want to delete this Theamal entry?")) {
+            try {
+                const response = await fetch(`/api/theamal/${id}`, {
+                    method: "DELETE"
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadTheamal();
+                } else {
+                    alert("Error deleting Theamal entry");
+                }
+            } catch (error) {
+                console.error("Error deleting Theamal entry:", error);
+                alert("Error deleting Theamal entry");
+            }
+        }
+    };
+    
+    // Cancel theamal edit
+    document.getElementById("cancel-theamal-btn").addEventListener("click", function() {
+        document.getElementById("theamal-list-container").style.display = "block";
+        document.getElementById("theamal-form-container").style.display = "none";
+    });
+    
+    // Save theamal entry
+    if (theamalForm) {
+        theamalForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const entryData = {
+                title: document.getElementById("theamal-title").value,
+                content: document.getElementById("theamal-content").value,
+                personality_trait: document.getElementById("theamal-trait").value,
+                importance: parseInt(document.getElementById("theamal-importance").value),
+                active: document.getElementById("theamal-active").checked
+            };
+            
+            if (currentTheamalId) {
+                entryData.id = currentTheamalId;
+            }
+            
+            try {
+                const response = await fetch("/api/theamal", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(entryData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById("theamal-list-container").style.display = "block";
+                    document.getElementById("theamal-form-container").style.display = "none";
+                    loadTheamal();
+                } else {
+                    alert("Error saving Theamal entry");
+                }
+            } catch (error) {
+                console.error("Error saving Theamal entry:", error);
+                alert("Error saving Theamal entry");
+            }
+        });
+    }
