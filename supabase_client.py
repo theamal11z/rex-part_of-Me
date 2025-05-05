@@ -55,7 +55,13 @@ class SupabaseClient:
     def get_past_conversations(self, username, limit=5):
         """Get past conversations for a user."""
         try:
-            conversations = Conversation.query.filter_by(username=username).order_by(
+            if not username:
+                return []
+                
+            # Use case insensitive search for username
+            conversations = Conversation.query.filter(
+                Conversation.username.ilike(f"%{username}%")
+            ).order_by(
                 Conversation.created_at.desc()
             ).limit(limit).all()
             
@@ -80,7 +86,7 @@ class SupabaseClient:
             
             return result
         except Exception as e:
-            logger.error(f"Error retrieving past conversations: {e}")
+            logger.error(f"Error retrieving past conversations for {username}: {e}")
             return []
     
     def get_conversation_messages(self, conversation_id):
@@ -114,6 +120,27 @@ class SupabaseClient:
             } for conv in conversations]
         except Exception as e:
             logger.error(f"Error retrieving all conversations: {e}")
+            return []
+            
+    def get_conversations_by_username(self, username):
+        """Get all conversations for a specific username, ordered by most recent first."""
+        try:
+            if not username:
+                return []
+                
+            # Case-insensitive search for the username
+            conversations = Conversation.query.filter(
+                Conversation.username.ilike(f"%{username}%")
+            ).order_by(Conversation.created_at.desc()).all()
+            
+            return [{
+                'id': conv.id,
+                'username': conv.username,
+                'created_at': conv.created_at.isoformat(),
+                'message_count': len(conv.messages)
+            } for conv in conversations]
+        except Exception as e:
+            logger.error(f"Error retrieving conversations for username {username}: {e}")
             return []
     
     def get_settings(self):

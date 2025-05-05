@@ -90,12 +90,24 @@ def chat():
     
     # Handle conversation storage
     past_conversations = []
+    
+    # For username lookup - only get past conversations if username is provided
+    if username:
+        # First check if there are any existing conversations for this username
+        existing_conversations = supabase.get_conversations_by_username(username)
+        
+        if existing_conversations and not conversation_id:
+            # Use the most recent conversation for this username if no specific ID provided
+            conversation_id = existing_conversations[0].get('id')
+            app.logger.debug(f"Using existing conversation {conversation_id} for username {username}")
+            
+        # Get past conversations for context regardless of whether we found one or not
+        past_conversations = supabase.get_past_conversations(username, limit=3)
+    
+    # If we still don't have a conversation ID, create a new one
     if not conversation_id:
-        # Create new conversation
+        app.logger.debug(f"Creating new conversation for username {username}")
         conversation_id = supabase.create_conversation(username)
-    else:
-        # Get past conversations for context
-        past_conversations = supabase.get_past_conversations(username)
     
     # Store the user message
     supabase.store_message(conversation_id, username, message, "user", emotional_tone)

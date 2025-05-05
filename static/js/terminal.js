@@ -10,13 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const reflectionsList = document.getElementById('reflections-list');
     
     let conversationId = null;
-    let username = 'Anonymous';
+    let username = '';
+    let hasProvidedName = false;
     let isWaitingForResponse = false;
     let currentReflectionType = 'microblog';
     
     // Initial welcome message
     addSystemMessage("Welcome to Rex - Mohsin Raja's digital emotional self");
-    addSystemMessage("Type a message to start the conversation...");
+    addSystemMessage("What's your name? I'll remember our conversation for next time.");
     
     // Focus the input field when the page loads
     terminalInput.focus();
@@ -34,14 +35,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Check if the message contains a name introduction
-            const nameMatch = message.match(/(?:i am|i'm|my name is|call me) (\w+)/i);
-            if (nameMatch && nameMatch[1]) {
-                username = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+            // Handle first message as name if no name has been provided yet
+            if (!hasProvidedName) {
+                // Extract name from message - either from an introduction or use the whole message
+                let extractedName = "";
+                const nameMatch = message.match(/(?:i am|i'm|my name is|call me) (\w+)/i);
+                
+                if (nameMatch && nameMatch[1]) {
+                    // Name found in structured introduction
+                    extractedName = nameMatch[1];
+                } else if (message.split(" ").length <= 2) {
+                    // Use the entire message as name if it's just 1-2 words
+                    extractedName = message;
+                }
+                
+                if (extractedName) {
+                    // Capitalize first letter and use as username
+                    username = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
+                    hasProvidedName = true;
+                    
+                    // Add a confirmation after the message
+                    addUserMessage(message);
+                    addSystemMessage(`Thanks, ${username}! I'll remember our conversation for next time.`);
+                } else {
+                    // Could not extract a name
+                    addUserMessage(message);
+                    addSystemMessage("I'm not sure I caught your name. Could you tell me just your name?");
+                    terminalInput.value = '';
+                    return; // Don't process this message further
+                }
+            } else {
+                // If the user changes their name later in the conversation
+                const nameMatch = message.match(/(?:i am|i'm|my name is|call me) (\w+)/i);
+                if (nameMatch && nameMatch[1]) {
+                    const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
+                    if (newName !== username) {
+                        username = newName;
+                        addUserMessage(message);
+                        addSystemMessage(`I'll remember you as ${username} from now on.`);
+                        terminalInput.value = '';
+                        
+                        // Reset conversation to start fresh with new name
+                        conversationId = null;
+                        return; // Don't process this message further
+                    }
+                }
+                
+                // Regular message processing
+                addUserMessage(message);
             }
             
-            // Add user message to the terminal
-            addUserMessage(message);
             terminalInput.value = '';
             
             // Prevent multiple requests
