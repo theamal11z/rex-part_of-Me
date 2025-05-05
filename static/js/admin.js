@@ -4,10 +4,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const conversationList = document.getElementById('conversation-list');
     const messageContainer = document.getElementById('message-container');
     const settingsForm = document.getElementById('settings-form');
+    const guidelinesForm = document.getElementById('guidelines-form');
     const reflectionForm = document.getElementById('reflection-form');
     const reflectionsList = document.getElementById('reflections-list');
+    const hinglishRatioSlider = document.getElementById('hinglish-ratio');
+    const hinglishRatioValue = document.getElementById('hinglish-ratio-value');
     
     let currentReflectionId = null;
+    
+    // Initialize the Hinglish ratio slider
+    if (hinglishRatioSlider && hinglishRatioValue) {
+        hinglishRatioSlider.addEventListener('input', function() {
+            hinglishRatioValue.textContent = this.value + '%';
+        });
+    }
     
     // Navigation
     navItems.forEach(item => {
@@ -35,6 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadConversations();
             } else if (targetSection === 'settings-section') {
                 loadSettings();
+            } else if (targetSection === 'guidelines-section') {
+                loadLanguageGuidelines();
             } else if (targetSection === 'reflections-section') {
                 loadReflections();
             }
@@ -43,6 +55,65 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial load
     loadConversations();
+    
+    // Load guidelines
+    async function loadLanguageGuidelines() {
+        try {
+            const response = await fetch('/api/guidelines');
+            const guidelines = await response.json();
+            
+            // Populate the form
+            document.getElementById('hinglish-mode').value = guidelines.hinglish_mode || 'auto';
+            document.getElementById('hinglish-phrases').value = guidelines.hinglish_phrases || '';
+            document.getElementById('hinglish-ratio').value = guidelines.hinglish_ratio || 50;
+            document.getElementById('hinglish-ratio-value').textContent = (guidelines.hinglish_ratio || 50) + '%';
+            document.getElementById('support-english').checked = guidelines.support_english !== false;
+            document.getElementById('support-hindi').checked = guidelines.support_hindi !== false;
+            document.getElementById('support-hinglish').checked = guidelines.support_hinglish !== false;
+            document.getElementById('language-detection').value = guidelines.language_detection || 'match-user';
+        } catch (error) {
+            console.error('Error loading language guidelines:', error);
+            // Use default values if fetch fails
+        }
+    }
+    
+    // Handle guidelines form submission
+    if (guidelinesForm) {
+        guidelinesForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const guidelines = {
+                hinglish_mode: document.getElementById('hinglish-mode').value,
+                hinglish_phrases: document.getElementById('hinglish-phrases').value,
+                hinglish_ratio: parseInt(document.getElementById('hinglish-ratio').value),
+                support_english: document.getElementById('support-english').checked,
+                support_hindi: document.getElementById('support-hindi').checked,
+                support_hinglish: document.getElementById('support-hinglish').checked,
+                language_detection: document.getElementById('language-detection').value
+            };
+            
+            try {
+                const response = await fetch('/api/guidelines', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(guidelines)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Guidelines saved successfully');
+                } else {
+                    alert('Error saving guidelines');
+                }
+            } catch (error) {
+                console.error('Error saving guidelines:', error);
+                alert('Error saving guidelines');
+            }
+        });
+    }
     
     // Load conversations
     async function loadConversations() {

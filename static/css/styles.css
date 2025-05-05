@@ -312,11 +312,87 @@ body {
   padding: 0.5rem;
   color: var(--text-color);
   font-family: var(--font-mono);
+  width: 100%;
 }
 
 .form-textarea {
   min-height: 120px;
   resize: vertical;
+}
+
+/* Range input styling */
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.range-input {
+  flex-grow: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #444;
+  border-radius: 3px;
+  outline: none;
+}
+
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Checkbox styling */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid #555;
+  border-radius: 3px;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background-color: var(--accent-color);
+}
+
+.checkbox-label input[type="checkbox"]:checked::before {
+  content: "✓";
+  color: white;
+  font-size: 0.8rem;
+  text-align: center;
+  line-height: 1;
 }
 
 .button {

@@ -19,6 +19,7 @@
             <div class="admin-nav">
                 <div class="admin-nav-item active" data-section="conversations-section">Conversations</div>
                 <div class="admin-nav-item" data-section="settings-section">Settings</div>
+                <div class="admin-nav-item" data-section="guidelines-section">Guidelines</div>
                 <div class="admin-nav-item" data-section="reflections-section">Reflections</div>
             </div>
             
@@ -64,6 +65,63 @@
                     
                     <div class="form-group">
                         <button type="submit" class="button">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Guidelines Section -->
+            <div id="guidelines-section" class="admin-section">
+                <h2>Language Guidelines</h2>
+                <form id="guidelines-form" class="admin-form">
+                    <div class="form-group">
+                        <label for="hinglish-mode" class="form-label">Hinglish Usage</label>
+                        <select id="hinglish-mode" class="form-select">
+                            <option value="auto">Automatic (based on user's tone)</option>
+                            <option value="always">Always use Hinglish</option>
+                            <option value="sometimes">Sometimes use Hinglish</option>
+                            <option value="never">Never use Hinglish</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hinglish-phrases" class="form-label">Common Hinglish Phrases</label>
+                        <textarea id="hinglish-phrases" class="form-textarea" placeholder="Enter common Hinglish phrases and expressions to use, one per line"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hinglish-ratio" class="form-label">Hinglish to English Ratio (when mixing)</label>
+                        <div class="range-container">
+                            <input type="range" id="hinglish-ratio" min="0" max="100" value="50" class="range-input">
+                            <span id="hinglish-ratio-value">50%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Languages to Support</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="support-english" checked> English
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="support-hindi" checked> Hindi
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="support-hinglish" checked> Hinglish
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="language-detection" class="form-label">Language Detection Strategy</label>
+                        <select id="language-detection" class="form-select">
+                            <option value="match-user">Match user's language</option>
+                            <option value="auto-detect">Auto-detect</option>
+                            <option value="predefined">Use predefined setting</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="button">Save Guidelines</button>
                     </div>
                 </form>
             </div>

@@ -56,3 +56,12 @@ class Reflection(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     published = db.Column(db.Boolean, default=False)
+    
+class Guideline(db.Model):
+    __tablename__ = 'guidelines'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(64), unique=True)
+    value = db.Column(db.Text)
+    description = db.Column(db.String(256))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
