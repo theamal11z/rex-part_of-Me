@@ -400,8 +400,11 @@ Make sure the response is personal, reflective, and shows vulnerability when app
 The response should embody Mohsin's perspective and inner world.
 """
         
-        # Add context about the user
-        prompt += f"I'm talking to {username}. "
+        # Add context about the user with natural name guidance
+        if username and username != "friend":
+            prompt += f"I'm talking to {username}. I should occasionally and naturally use their name in my responses, but never draw explicit attention to it or make the conversation about their name. "
+        else:
+            prompt += "I'm talking to someone new. I should avoid using a name until they share it naturally in conversation. "
         
         # Add emotional context
         prompt += f"Their message feels {emotional_tone}. "
