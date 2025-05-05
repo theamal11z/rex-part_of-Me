@@ -34,7 +34,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db.init_app(app)
 
 # Import after db initialization to avoid circular imports
-from models import User, Conversation, Message, AdminSetting
+from models import User, Conversation, Message, AdminSetting, Reflection, Guideline
 from supabase_client import SupabaseClient
 from gemini_client import GeminiClient
 
@@ -187,6 +187,18 @@ def get_public_reflections():
     reflection_type = request.args.get('type')
     reflections = supabase.get_public_reflections(reflection_type)
     return jsonify(reflections)
+
+@app.route('/api/guidelines', methods=['GET', 'POST'])
+@token_required
+def manage_guidelines(current_user):
+    """Manage language guidelines for Hinglish support and language detection"""
+    if request.method == 'GET':
+        guidelines = supabase.get_guidelines()
+        return jsonify(guidelines)
+    else:
+        data = request.json
+        success = supabase.update_guidelines(data)
+        return jsonify({'success': success})
         
 @app.route('/logout', methods=['POST'])
 def logout():

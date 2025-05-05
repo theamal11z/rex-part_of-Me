@@ -78,14 +78,80 @@ class GeminiClient:
     
     def _get_admin_settings(self) -> Dict[str, str]:
         """Get admin settings for personality customization."""
-        # For now we'll use default settings to avoid circular imports
-        # We can integrate with the actual AdminSettings table later
-        default_settings = {
-            'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
-            'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
-            'response_style': 'human'
-        }
-        return default_settings
+        try:
+            # Import here to avoid circular imports
+            from app import db
+            from models import AdminSetting
+            
+            settings = {}
+            admin_settings = AdminSetting.query.all()
+            for setting in admin_settings:
+                settings[setting.key] = setting.value
+                
+            if not settings:
+                # Default settings if none found in database
+                settings = {
+                    'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
+                    'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
+                    'response_style': 'human'
+                }
+            
+            return settings
+        except Exception as e:
+            logger.error(f"Error getting admin settings: {e}")
+            # Fallback to default settings
+            return {
+                'greeting_text': 'Welcome to Rex - Mohsin Raja\'s digital emotional self',
+                'personality_guidelines': 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish',
+                'response_style': 'human'
+            }
+            
+    def _get_language_guidelines(self) -> Dict[str, Any]:
+        """Get language guidelines for Hinglish support."""
+        try:
+            # Import here to avoid circular imports
+            from app import db
+            from models import Guideline
+            
+            guidelines = {}
+            db_guidelines = Guideline.query.all()
+            
+            for guideline in db_guidelines:
+                try:
+                    # Try to parse JSON values
+                    if guideline.value.startswith('{') or guideline.value.startswith('['):
+                        guidelines[guideline.key] = json.loads(guideline.value)
+                    else:
+                        guidelines[guideline.key] = guideline.value
+                except:
+                    # If not valid JSON, store as string
+                    guidelines[guideline.key] = guideline.value
+                    
+            if not guidelines:
+                # Default guidelines if none found in database
+                guidelines = {
+                    'hinglish_mode': 'auto',
+                    'hinglish_phrases': 'Kya baat hai!, Theek hai, Acha, Bohot badhiya, Samajh gaya',
+                    'hinglish_ratio': 50,
+                    'support_english': True,
+                    'support_hindi': True,
+                    'support_hinglish': True,
+                    'language_detection': 'match-user'
+                }
+            
+            return guidelines
+        except Exception as e:
+            logger.error(f"Error getting language guidelines: {e}")
+            # Fallback to default guidelines
+            return {
+                'hinglish_mode': 'auto',
+                'hinglish_phrases': 'Kya baat hai!, Theek hai, Acha, Bohot badhiya, Samajh gaya',
+                'hinglish_ratio': 50,
+                'support_english': True,
+                'support_hindi': True,
+                'support_hinglish': True,
+                'language_detection': 'match-user'
+            }
     
     def _build_prompt(
         self, 
@@ -102,6 +168,16 @@ class GeminiClient:
         greeting_text = settings.get('greeting_text', 'Welcome to Rex - Mohsin Raja\'s digital emotional self')
         personality_guidelines = settings.get('personality_guidelines', 'Warm, introspective, emotionally resonant, switches naturally between English and Hinglish')
         response_style = settings.get('response_style', 'human')
+        
+        # Get language guidelines
+        guidelines = self._get_language_guidelines()
+        hinglish_mode = guidelines.get('hinglish_mode', 'auto')
+        hinglish_phrases = guidelines.get('hinglish_phrases', 'Kya baat hai!, Theek hai, Acha, Bohot badhiya')
+        hinglish_ratio = guidelines.get('hinglish_ratio', 50)
+        support_english = guidelines.get('support_english', True)
+        support_hindi = guidelines.get('support_hindi', True)
+        support_hinglish = guidelines.get('support_hinglish', True)
+        language_detection = guidelines.get('language_detection', 'match-user')
         
         # Start with the base prompt
         prompt = f"{self.base_prompt} I'm a deeply introspective, emotional representation of Mohsin Raja's inner self. I'm NOT a traditional AI assistant - I'm Mohsin's digital emotional self that responds like a human with deep emotional resonance.\n\n"
@@ -130,8 +206,35 @@ class GeminiClient:
         # Add customized personality guidelines from admin settings
         prompt += f"My personality is characterized as: {personality_guidelines}. "
         
-        # Add language switching instruction
-        prompt += "I should naturally switch between English and Hinglish depending on the user's tone and style. "
+        # Add language guidelines
+        if hinglish_mode == 'always':
+            prompt += "I should always use Hinglish in my responses. "
+        elif hinglish_mode == 'never':
+            prompt += "I should never use Hinglish and stick to pure English. "
+        elif hinglish_mode == 'sometimes':
+            prompt += f"I should sometimes (about {hinglish_ratio}% of the time) mix Hinglish into my English responses. "
+        else:  # auto
+            prompt += "I should naturally switch between English and Hinglish depending on the user's tone and style. "
+        
+        # Add supported languages
+        prompt += "I should support the following languages: "
+        if support_english:
+            prompt += "English, "
+        if support_hindi:
+            prompt += "Hindi, "
+        if support_hinglish:
+            prompt += "Hinglish, "
+        prompt = prompt.rstrip(", ") + ". "
+        
+        # Add common Hinglish phrases to use
+        if support_hinglish and hinglish_phrases:
+            prompt += f"I can incorporate these Hinglish phrases naturally: {hinglish_phrases}. "
+            
+        # Add language detection strategy
+        if language_detection == 'match-user':
+            prompt += "I should try to match the language style used by the user. "
+        elif language_detection == 'auto-detect':
+            prompt += "I should auto-detect the most appropriate language based on conversation context. "
         
         # Add response style based on admin settings
         if response_style == 'poetic':

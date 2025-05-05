@@ -247,3 +247,56 @@ class SupabaseClient:
             logger.error(f"Error deleting reflection: {e}")
             db.session.rollback()
             return False
+    
+    def get_guidelines(self):
+        """Get all language guidelines."""
+        try:
+            guidelines = Guideline.query.all()
+            result = {}
+            for guideline in guidelines:
+                try:
+                    # Try to parse JSON values
+                    if guideline.value.startswith('{') or guideline.value.startswith('['):
+                        result[guideline.key] = json.loads(guideline.value)
+                    else:
+                        result[guideline.key] = guideline.value
+                except:
+                    # If not valid JSON, store as string
+                    result[guideline.key] = guideline.value
+            return result
+        except Exception as e:
+            logger.error(f"Error retrieving guidelines: {e}")
+            return {}
+    
+    def update_guidelines(self, guidelines_data):
+        """Update language guidelines."""
+        try:
+            for key, value in guidelines_data.items():
+                # Convert non-string values to JSON
+                if not isinstance(value, str):
+                    value = json.dumps(value)
+                
+                guideline = Guideline.query.filter_by(key=key).first()
+                if guideline:
+                    guideline.value = value
+                else:
+                    # Create new guideline with a default description
+                    description = {
+                        'hinglish_mode': 'Controls when Hinglish should be used in responses',
+                        'hinglish_phrases': 'Common Hinglish phrases to incorporate in responses',
+                        'hinglish_ratio': 'Percentage of Hinglish to use when mixing with English',
+                        'support_english': 'Whether to support English in responses',
+                        'support_hindi': 'Whether to support Hindi in responses',
+                        'support_hinglish': 'Whether to support Hinglish in responses',
+                        'language_detection': 'Strategy for detecting which language to respond in'
+                    }.get(key, 'Language guidelines setting')
+                    
+                    guideline = Guideline(key=key, value=value, description=description)
+                    db.session.add(guideline)
+            
+            db.session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error updating guidelines: {e}")
+            db.session.rollback()
+            return False
