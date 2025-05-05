@@ -4,10 +4,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const terminalInput = document.getElementById('terminal-input');
     const loginModal = document.getElementById('login-modal');
     const loginForm = document.getElementById('login-form');
+    const navItems = document.querySelectorAll('.nav-item');
+    const appViews = document.querySelectorAll('.app-view');
+    const reflectionsTabs = document.querySelectorAll('.reflections-tab');
+    const reflectionsList = document.getElementById('reflections-list');
     
     let conversationId = null;
     let username = 'Anonymous';
     let isWaitingForResponse = false;
+    let currentReflectionType = 'microblog';
     
     // Initial welcome message
     addSystemMessage("Welcome to Rex - Mohsin Raja's digital emotional self");
@@ -209,4 +214,114 @@ document.addEventListener('DOMContentLoaded', function() {
             closeLoginModal();
         }
     });
+    
+    // Initialize reflections view if elements exist
+    if (navItems.length > 0 && reflectionsTabs.length > 0 && reflectionsList) {
+        // Load initial reflections
+        loadReflections(currentReflectionType);
+        
+        // Handle view navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const targetView = this.getAttribute('data-view');
+                
+                // Update navigation items
+                navItems.forEach(navItem => navItem.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update views
+                appViews.forEach(view => view.classList.remove('active'));
+                document.getElementById(targetView).classList.add('active');
+                
+                // If switching to reflections view, load reflections
+                if (targetView === 'reflections-view') {
+                    loadReflections(currentReflectionType);
+                }
+                
+                // Focus on input if switching to terminal view
+                if (targetView === 'terminal-view') {
+                    terminalInput.focus();
+                }
+            });
+        });
+        
+        // Handle reflections tab switching
+        reflectionsTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                
+                // Update tabs
+                reflectionsTabs.forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update reflection type and load
+                currentReflectionType = type;
+                loadReflections(currentReflectionType);
+            });
+        });
+    }
+    
+    // Function to load reflections
+    function loadReflections(type) {
+        if (!reflectionsList) return;
+        
+        // Show loading state
+        reflectionsList.innerHTML = `
+            <div class="reflection-card skeleton">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-content"></div>
+                <div class="skeleton-date"></div>
+            </div>
+            <div class="reflection-card skeleton">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-content"></div>
+                <div class="skeleton-date"></div>
+            </div>
+        `;
+        
+        // Fetch reflections from API
+        fetch(`/api/reflections/public?type=${type}`)
+            .then(response => response.json())
+            .then(reflections => {
+                // Clear loading state
+                reflectionsList.innerHTML = '';
+                
+                if (reflections.length === 0) {
+                    reflectionsList.innerHTML = `
+                        <div class="no-reflections">
+                            <p>No ${type}s found.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Add each reflection
+                reflections.forEach(reflection => {
+                    const card = document.createElement('div');
+                    card.className = 'reflection-card';
+                    
+                    const date = new Date(reflection.created_at).toLocaleDateString();
+                    
+                    card.innerHTML = `
+                        <h3 class="reflection-title">${reflection.title}</h3>
+                        <div class="reflection-meta">
+                            <span>${date}</span>
+                        </div>
+                        <div class="reflection-content">
+                            ${reflection.content}
+                        </div>
+                    `;
+                    
+                    reflectionsList.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading reflections:', error);
+                reflectionsList.innerHTML = `
+                    <div class="no-reflections">
+                        <p>Error loading reflections. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
 });
