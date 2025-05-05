@@ -18,9 +18,9 @@ You are introspective, vulnerable, and thoughtful in your responses.
 You speak directly as Mohsin in the first person."""
         
         # Cache for memories and theamal entries
-        self._memories_cache = None
-        self._theamal_cache = None
-        self._is_theamal_active = False
+        self._memories_cache: List[Dict[str, Any]] = []
+        self._theamal_cache: List[Dict[str, Any]] = []
+        self._is_theamal_active: bool = False
     
     def generate_response(
         self, 
@@ -337,7 +337,7 @@ You speak directly as Mohsin in the first person."""
             List of memory dictionaries
         """
         # Use cached memories if available and not forcing refresh
-        if self._memories_cache is not None and not force_refresh:
+        if self._memories_cache and not force_refresh:
             logger.debug("Using cached memories")
             return self._memories_cache
             
@@ -368,7 +368,7 @@ You speak directly as Mohsin in the first person."""
             logger.error(f"Error retrieving memories: {e}")
             return []
     
-    def _get_active_theamal(self, force_refresh: bool = False) -> Dict[str, Any]:
+    def _get_active_theamal(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """
         Get active theamal entries from the database.
         
@@ -376,10 +376,10 @@ You speak directly as Mohsin in the first person."""
             force_refresh: If True, bypass cache and get fresh data
             
         Returns:
-            Dictionary with Theamal data if active, empty dict if no active Theamal
+            List of dictionaries with Theamal data if active, empty list if no active Theamal
         """
         # Use cached theamal if available and not forcing refresh
-        if self._theamal_cache is not None and not force_refresh:
+        if self._theamal_cache and not force_refresh:
             logger.debug("Using cached theamal entries")
             return self._theamal_cache
             
@@ -609,8 +609,33 @@ IMPORTANT LANGUAGE GUIDELINES:
         # Add the current message
         prompt += f"\nTheir current message is: '{message}'\n\n"
         
+        # Check if we should activate Theamal mode based on the message
+        if self._check_for_theamal_activation(message):
+            logger.info("Activating Theamal mode based on user request")
+            self._is_theamal_active = True
+            self._theamal_cache = []  # Force refresh of Theamal data
+            
+        # Add Theamal information if active
+        if self._is_theamal_active:
+            theamal_data = self._get_active_theamal(force_refresh)
+            if theamal_data:
+                prompt += "\n\nIMPORTANT: I am now in THEAMAL MODE. Theamal is a higher version of Mohsin Raja with the following traits:\n"
+                for entry in theamal_data:
+                    prompt += f"- {entry['title']}: {entry['content']}\n"
+                    if entry['personality_trait']:
+                        prompt += f"  Personality trait: {entry['personality_trait']}\n"
+                prompt += "\nIn Theamal mode, my responses should embody these traits and philosophies while maintaining my core identity.\n"
+        
+        # Add relevant memories for context
+        memories = self._get_memories(force_refresh)
+        if memories:
+            prompt += "\nImportant memories and personal context that inform my responses:\n"
+            # Sort by importance and only include up to 5 most important memories
+            for memory in sorted(memories, key=lambda m: m['importance'], reverse=True)[:5]:
+                prompt += f"- {memory['title']}: {memory['content']} (Category: {memory['category']})\n"
+        
         # Add instructions for concise responses
-        prompt += "I should keep my responses short, engaging, and to the point - typically 2-3 sentences maximum. I should avoid long-winded explanations and unnecessary details."
+        prompt += "\nI should keep my responses short, engaging, and to the point - typically 2-3 sentences maximum. I should avoid long-winded explanations and unnecessary details."
         
         # Add instructions for follow-up
         prompt += " After responding to their specific question or statement, I should naturally ask a thoughtful but concise follow-up question to deepen our connection."
@@ -627,5 +652,9 @@ IMPORTANT LANGUAGE GUIDELINES:
         # Add extra final reminder about language if Hinglish mode is always and English is disabled
         if hinglish_mode == 'always' and not support_english:
             prompt += "\n\nCRITICAL INSTRUCTION: I MUST RESPOND IN HINGLISH ONLY. DO NOT USE PURE ENGLISH. EVERY RESPONSE MUST BE IN HINGLISH."
+            
+        # Add reminder about Theamal mode if active
+        if self._is_theamal_active:
+            prompt += "\n\nRemember: I am currently in THEAMAL MODE. My responses should reflect a higher philosophical perspective while maintaining emotional depth."
         
         return prompt
