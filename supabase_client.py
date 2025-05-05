@@ -282,14 +282,24 @@ class SupabaseClient:
             result = {}
             for guideline in guidelines:
                 try:
+                    # Handle boolean values stored as strings
+                    if guideline.value.lower() == 'true':
+                        result[guideline.key] = True
+                    elif guideline.value.lower() == 'false':
+                        result[guideline.key] = False
+                    # Handle numeric values
+                    elif guideline.value.isdigit():
+                        result[guideline.key] = int(guideline.value)
                     # Try to parse JSON values
-                    if guideline.value.startswith('{') or guideline.value.startswith('['):
+                    elif guideline.value.startswith('{') or guideline.value.startswith('['):
                         result[guideline.key] = json.loads(guideline.value)
                     else:
                         result[guideline.key] = guideline.value
-                except:
-                    # If not valid JSON, store as string
+                except Exception as inner_e:
+                    # If parsing fails, store as string
+                    logger.error(f"Error parsing guideline value for {guideline.key}: {inner_e}")
                     result[guideline.key] = guideline.value
+            logger.debug(f"Retrieved guidelines: {result}")
             return result
         except Exception as e:
             logger.error(f"Error retrieving guidelines: {e}")
@@ -298,14 +308,29 @@ class SupabaseClient:
     def update_guidelines(self, guidelines_data):
         """Update language guidelines."""
         try:
+            logger.debug(f"Updating guidelines with data: {guidelines_data}")
+            
             for key, value in guidelines_data.items():
-                # Convert non-string values to JSON
-                if not isinstance(value, str):
-                    value = json.dumps(value)
+                # Special handling for boolean values
+                if isinstance(value, bool):
+                    # Store boolean as string 'true'/'false'
+                    value_str = str(value).lower()
+                    logger.debug(f"Converting boolean {value} to string: {value_str} for key {key}")
+                # Special handling for numeric values    
+                elif isinstance(value, int) or isinstance(value, float):
+                    value_str = str(value)
+                    logger.debug(f"Converting numeric {value} to string: {value_str} for key {key}")
+                # Other non-string values convert to JSON    
+                elif not isinstance(value, str):
+                    value_str = json.dumps(value)
+                    logger.debug(f"Converting complex value to JSON string for key {key}")
+                else:
+                    value_str = value
                 
                 guideline = Guideline.query.filter_by(key=key).first()
                 if guideline:
-                    guideline.value = value
+                    logger.debug(f"Updating existing guideline {key} from '{guideline.value}' to '{value_str}'")
+                    guideline.value = value_str
                 else:
                     # Create new guideline with a default description
                     description = {
@@ -318,10 +343,16 @@ class SupabaseClient:
                         'language_detection': 'Strategy for detecting which language to respond in'
                     }.get(key, 'Language guidelines setting')
                     
-                    guideline = Guideline(key=key, value=value, description=description)
+                    logger.debug(f"Creating new guideline {key} with value '{value_str}'")
+                    guideline = Guideline(key=key, value=value_str, description=description)
                     db.session.add(guideline)
             
             db.session.commit()
+            
+            # Clear any cache that might exist
+            if hasattr(self, '_guidelines_cache'):
+                delattr(self, '_guidelines_cache')
+                
             return True
         except Exception as e:
             logger.error(f"Error updating guidelines: {e}")

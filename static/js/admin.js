@@ -135,6 +135,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 language_detection: document.getElementById('language-detection').value
             };
             
+            // Log the values being sent (for debugging)
+            console.log("Sending guidelines:", JSON.stringify(guidelines));
+            
             try {
                 const response = await fetch('/api/guidelines', {
                     method: 'POST',
