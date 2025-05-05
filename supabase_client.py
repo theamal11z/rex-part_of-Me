@@ -300,3 +300,88 @@ class SupabaseClient:
             logger.error(f"Error updating guidelines: {e}")
             db.session.rollback()
             return False
+            
+    def get_custom_guidelines(self):
+        """Get all custom guidelines."""
+        try:
+            guidelines = Guideline.query.filter(Guideline.key.startswith('custom_')).all()
+            
+            result = []
+            for guideline in guidelines:
+                # Remove 'custom_' prefix for frontend display
+                key = guideline.key.replace('custom_', '', 1)
+                result.append({
+                    'key': key,
+                    'value': guideline.value,
+                    'description': guideline.description
+                })
+            
+            return result
+        except Exception as e:
+            logger.error(f"Error retrieving custom guidelines: {e}")
+            return []
+    
+    def create_custom_guideline(self, guideline_data):
+        """Create a new custom guideline."""
+        try:
+            # Add 'custom_' prefix to key to distinguish from system guidelines
+            key = f"custom_{guideline_data['key']}"
+            value = guideline_data['value']
+            description = guideline_data.get('description', '')
+            
+            # Check if guideline with this key already exists
+            existing = Guideline.query.filter_by(key=key).first()
+            if existing:
+                return False
+            
+            guideline = Guideline(
+                key=key,
+                value=value,
+                description=description
+            )
+            db.session.add(guideline)
+            db.session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error creating custom guideline: {e}")
+            db.session.rollback()
+            return False
+    
+    def update_custom_guideline(self, guideline_data):
+        """Update an existing custom guideline."""
+        try:
+            # Add 'custom_' prefix to key
+            key = f"custom_{guideline_data['key']}"
+            value = guideline_data['value']
+            description = guideline_data.get('description', '')
+            
+            guideline = Guideline.query.filter_by(key=key).first()
+            if not guideline:
+                return False
+            
+            guideline.value = value
+            guideline.description = description
+            db.session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error updating custom guideline: {e}")
+            db.session.rollback()
+            return False
+    
+    def delete_custom_guideline(self, key):
+        """Delete a custom guideline."""
+        try:
+            # Add 'custom_' prefix to key
+            key = f"custom_{key}"
+            
+            guideline = Guideline.query.filter_by(key=key).first()
+            if not guideline:
+                return False
+            
+            db.session.delete(guideline)
+            db.session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting custom guideline: {e}")
+            db.session.rollback()
+            return False

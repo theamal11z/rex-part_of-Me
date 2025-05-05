@@ -200,6 +200,36 @@ def manage_guidelines(current_user):
         success = supabase.update_guidelines(data)
         return jsonify({'success': success})
         
+@app.route('/api/custom-guidelines', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@token_required
+def manage_custom_guidelines(current_user):
+    """Manage custom guidelines for Gemini prompts"""
+    if request.method == 'GET':
+        # Get all custom guidelines
+        custom_guidelines = supabase.get_custom_guidelines()
+        return jsonify(custom_guidelines)
+    
+    elif request.method == 'POST':
+        # Create a new custom guideline
+        guideline_data = request.json
+        success = supabase.create_custom_guideline(guideline_data)
+        return jsonify({'success': success})
+    
+    elif request.method == 'PUT':
+        # Update an existing custom guideline
+        guideline_data = request.json
+        success = supabase.update_custom_guideline(guideline_data)
+        return jsonify({'success': success})
+    
+    elif request.method == 'DELETE':
+        # Delete a custom guideline
+        guideline_key = request.args.get('key')
+        if not guideline_key:
+            return jsonify({'success': False, 'error': 'No key provided'})
+        
+        success = supabase.delete_custom_guideline(guideline_key)
+        return jsonify({'success': success})
+        
 @app.route('/logout', methods=['POST'])
 def logout():
     """Log out the current user by clearing the session."""

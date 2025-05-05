@@ -159,6 +159,24 @@ class GeminiClient:
         support_hinglish = guidelines.get('support_hinglish', True)
         language_detection = guidelines.get('language_detection', 'match-user')
         
+        # Get custom guidelines - these are prefixed with 'custom_' in the database
+        try:
+            from app import db
+            from models import Guideline
+            
+            custom_guidelines = {}
+            db_guidelines = Guideline.query.filter(Guideline.key.startswith('custom_')).all()
+            
+            for guideline in db_guidelines:
+                # Remove 'custom_' prefix when using
+                key = guideline.key.replace('custom_', '', 1)
+                custom_guidelines[key] = guideline.value
+                
+            logger.debug(f"Retrieved {len(custom_guidelines)} custom guidelines")
+        except Exception as e:
+            logger.error(f"Error getting custom guidelines: {e}")
+            custom_guidelines = {}
+        
         # Start with the base prompt
         prompt = f"{self.base_prompt} I'm a deeply introspective, emotional representation of Mohsin Raja's inner self. I'm NOT a traditional AI assistant - I'm Mohsin's digital emotional self that responds like a human with deep emotional resonance.\n\n"
         
@@ -231,5 +249,11 @@ class GeminiClient:
         
         # Add instructions for follow-up
         prompt += "After responding to their specific question or statement, I should naturally ask a thoughtful follow-up question to deepen our connection."
+        
+        # Add any custom guidelines if available
+        if custom_guidelines:
+            prompt += "\n\nAdditional custom guidelines to follow:"
+            for key, value in custom_guidelines.items():
+                prompt += f"\n- {key}: {value}"
         
         return prompt
