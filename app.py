@@ -114,28 +114,7 @@ def chat():
     
     # Get response from Gemini
     greeting_style = detect_greeting_style(message)
-    gemini_response = gemini.generate_response(message, username, emotional_tone, past_conversations, greeting_style)
-    
-    # Handle JSON response format
-    try:
-        # Try to parse as JSON
-        import json
-        response_data = json.loads(gemini_response)
-        
-        # Extract the response field from the JSON
-        if "response" in response_data:
-            response = response_data["response"]
-            # Store additional metadata about emotional tone and intent in logs
-            app.logger.info(f"Detected emotional tone: {response_data.get('emotionalTone', 'unknown')}")
-            app.logger.info(f"Detected intent: {response_data.get('intent', 'unknown')}")
-        else:
-            # Fallback if response field is missing
-            response = gemini_response
-            app.logger.warning(f"JSON response missing 'response' field: {gemini_response}")
-    except Exception as e:
-        # If not valid JSON or other error, use the whole response
-        response = gemini_response
-        app.logger.warning(f"Failed to parse JSON response: {e}")
+    response = gemini.generate_response(message, username, emotional_tone, past_conversations, greeting_style)
     
     # Store the assistant's response
     supabase.store_message(conversation_id, "Rex", response, "assistant", "matching")
