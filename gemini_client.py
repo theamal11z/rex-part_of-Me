@@ -206,29 +206,45 @@ class GeminiClient:
         # Add customized personality guidelines from admin settings
         prompt += f"My personality is characterized as: {personality_guidelines}. "
         
-        # Add language guidelines
+        # Add language guidelines with stronger directives
         if hinglish_mode == 'always':
-            prompt += "I should always use Hinglish in my responses. "
+            prompt += "IMPORTANT INSTRUCTION: I MUST ALWAYS USE HINGLISH in my responses. No pure English responses are allowed under any circumstances. "
+            if not support_english:
+                prompt += "I SHOULD NOT use pure English at all - I must use Hinglish for every response. "
         elif hinglish_mode == 'never':
-            prompt += "I should never use Hinglish and stick to pure English. "
+            prompt += "I must never use Hinglish and must stick to pure English only. "
         elif hinglish_mode == 'sometimes':
-            prompt += f"I should sometimes (about {hinglish_ratio}% of the time) mix Hinglish into my English responses. "
+            prompt += f"I should mix Hinglish into my English responses about {hinglish_ratio}% of the time. "
         else:  # auto
             prompt += "I should naturally switch between English and Hinglish depending on the user's tone and style. "
         
-        # Add supported languages
-        prompt += "I should support the following languages: "
+        # Add supported languages with stronger directives
+        prompt += "The ONLY languages I'm allowed to use are: "
+        
+        allowed_languages = []
         if support_english:
-            prompt += "English, "
+            allowed_languages.append("English")
         if support_hindi:
-            prompt += "Hindi, "
+            allowed_languages.append("Hindi")
         if support_hinglish:
-            prompt += "Hinglish, "
-        prompt = prompt.rstrip(", ") + ". "
+            allowed_languages.append("Hinglish")
+            
+        if len(allowed_languages) == 0:
+            # Default to Hinglish if no languages selected
+            prompt += "Hinglish only. "
+        elif len(allowed_languages) == 1:
+            # If only one language is selected, emphasize it
+            prompt += f"{allowed_languages[0]} ONLY - no other languages are permitted. "
+        else:
+            prompt += ", ".join(allowed_languages) + ". "
         
         # Add common Hinglish phrases to use
         if support_hinglish and hinglish_phrases:
-            prompt += f"I can incorporate these Hinglish phrases naturally: {hinglish_phrases}. "
+            prompt += f"I must incorporate these Hinglish words and phrases naturally: {hinglish_phrases}. "
+            
+        # Add more emphasis on Hinglish for hinglish_mode=always
+        if hinglish_mode == 'always':
+            prompt += "I should regularly use Hinglish words and phrases like 'Kya kar rahe ho', 'Acha', 'Theek hai', 'Bohot badhiya', 'Kya baat hai', 'Haan', 'Nahi', 'Main', 'Tum', 'Aap', and mix Hindi words with English grammar. "
             
         # Add language detection strategy
         if language_detection == 'match-user':
@@ -261,7 +277,11 @@ class GeminiClient:
             for key, value in custom_guidelines.items():
                 prompt += f"\n- {key}: {value}"
                 
-        # Final reminder about response style
+        # Final reminder about response style and language
         prompt += "\n\nVery important: Be direct and concise. Create emotional depth through carefully chosen words rather than length. My responses should be brief but impactful."
+        
+        # Add extra final reminder about language if Hinglish mode is always and English is disabled
+        if hinglish_mode == 'always' and not support_english:
+            prompt += "\n\nCRITICAL INSTRUCTION: I MUST RESPOND IN HINGLISH ONLY. DO NOT USE PURE ENGLISH. EVERY RESPONSE MUST BE IN HINGLISH."
         
         return prompt
