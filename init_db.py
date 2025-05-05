@@ -1,8 +1,9 @@
 from app import app, db
-from models import Guideline, AdminSetting
+from models import Guideline, AdminSetting, Reflection
+from datetime import datetime
 
 def initialize_database():
-    """Initialize the database with default settings and guidelines."""
+    """Initialize the database with default settings, guidelines, and reflections."""
     
     with app.app_context():
         # Default admin settings if not exists
@@ -17,6 +18,20 @@ def initialize_database():
             if not existing:
                 new_setting = AdminSetting(key=setting['key'], value=setting['value'])
                 db.session.add(new_setting)
+        
+        # Check if we have any reflections and add a sample one if none exist
+        reflection_count = Reflection.query.count()
+        if reflection_count == 0:
+            # Add a sample private reflection that will be used for context
+            sample_reflection = Reflection(
+                title="Understanding Connection",
+                content="I've been thinking about how we connect with others. Sometimes, words aren't enough - it's the pauses, the shared silences, the knowing glances that truly build bridges between souls. There's something profound in being understood without having to explain yourself fully. That moment when someone gets you... it feels like coming home.",
+                type="microblog",
+                published=False,  # Private reflection
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.session.add(sample_reflection)
         
         # Default language guidelines if not exists
         guidelines = [

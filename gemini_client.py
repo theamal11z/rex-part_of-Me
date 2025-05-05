@@ -490,6 +490,31 @@ IMPORTANT LANGUAGE GUIDELINES:
         else:  # human (default)
             prompt += "My responses should be warm, introspective, and filled with emotional depth. I should respond as if I'm Mohsin's inner voice - philosophical, thoughtful, and genuinely human. "
         
+        # Add reflections as context for the AI
+        try:
+            # Import here to avoid circular imports
+            from supabase_client import SupabaseClient
+            
+            # Get all reflections (both public and private) for AI context
+            supabase = SupabaseClient()
+            all_reflections = supabase.get_reflections()
+            
+            if all_reflections and len(all_reflections) > 0:
+                prompt += "\n\nHere are my personal reflections that should inform my responses (these are private thoughts that shape my worldview):\n"
+                
+                # Limit to most recent 5 reflections to keep context reasonable
+                for i, reflection in enumerate(all_reflections[:5]):
+                    title = reflection.get('title', 'Untitled')
+                    content = reflection.get('content', '')
+                    reflection_type = reflection.get('type', 'microblog')
+                    
+                    prompt += f"\nReflection {i+1} ({reflection_type}) - {title}:\n{content}\n"
+                
+                prompt += "\nI should use these reflections to inform my responses and personality, but I should not directly mention them unless specifically asked about them.\n"
+        except Exception as e:
+            logger.error(f"Error fetching reflections for context: {e}")
+            # Continue without reflections if there's an error
+            
         # Add the current message
         prompt += f"\nTheir current message is: '{message}'\n\n"
         
