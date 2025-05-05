@@ -104,30 +104,41 @@ class GeminiClient:
             
             guidelines = {}
             db_guidelines = Guideline.query.all()
+            custom_guideline_count = 0
             
             for guideline in db_guidelines:
                 try:
-                    # Try to parse JSON values
-                    if guideline.value and (guideline.value.startswith('{') or guideline.value.startswith('[')):
-                        guidelines[guideline.key] = json.loads(guideline.value)
-                    else:
-                        # Convert boolean strings to actual booleans
-                        if guideline.value == 'true':
-                            guidelines[guideline.key] = True
-                        elif guideline.value == 'false':
-                            guidelines[guideline.key] = False
-                        # Convert numeric strings to integers
-                        elif guideline.value and guideline.value.isdigit():
-                            guidelines[guideline.key] = int(guideline.value)
-                        else:
+                    # Skip empty values
+                    if guideline.value is None or guideline.value == "":
+                        continue
+                        
+                    # Count custom guidelines
+                    if guideline.key.startswith('custom_'):
+                        custom_guideline_count += 1
+                    
+                    # Process value based on type/format
+                    if guideline.value.lower() == 'true':
+                        guidelines[guideline.key] = True
+                    elif guideline.value.lower() == 'false':
+                        guidelines[guideline.key] = False
+                    elif guideline.value.isdigit():
+                        guidelines[guideline.key] = int(guideline.value)
+                    elif guideline.value and (guideline.value.startswith('{') or guideline.value.startswith('[')):
+                        # Handle JSON values (with error catching)
+                        try:
+                            guidelines[guideline.key] = json.loads(guideline.value)
+                        except:
                             guidelines[guideline.key] = guideline.value
+                    else:
+                        guidelines[guideline.key] = guideline.value
                 except Exception as parse_error:
-                    logger.error(f"Error parsing guideline value: {parse_error}")
+                    logger.error(f"Error parsing guideline {guideline.key}: {parse_error}")
                     # If parsing fails, store as string
                     guidelines[guideline.key] = guideline.value
             
             # Log what was retrieved from database
             logger.debug(f"Retrieved language guidelines from database: {guidelines}")
+            logger.debug(f"Retrieved {custom_guideline_count} custom guidelines")
             return guidelines
         except Exception as e:
             logger.error(f"Error getting language guidelines: {e}")
@@ -159,23 +170,14 @@ class GeminiClient:
         support_hinglish = guidelines.get('support_hinglish', True)
         language_detection = guidelines.get('language_detection', 'match-user')
         
-        # Get custom guidelines - these are prefixed with 'custom_' in the database
-        try:
-            from app import db
-            from models import Guideline
-            
-            custom_guidelines = {}
-            db_guidelines = Guideline.query.filter(Guideline.key.startswith('custom_')).all()
-            
-            for guideline in db_guidelines:
+        # Extract custom guidelines from the already loaded guidelines
+        # Custom guidelines are prefixed with 'custom_' in the database
+        custom_guidelines = {}
+        for key, value in guidelines.items():
+            if key.startswith('custom_'):
                 # Remove 'custom_' prefix when using
-                key = guideline.key.replace('custom_', '', 1)
-                custom_guidelines[key] = guideline.value
-                
-            logger.debug(f"Retrieved {len(custom_guidelines)} custom guidelines")
-        except Exception as e:
-            logger.error(f"Error getting custom guidelines: {e}")
-            custom_guidelines = {}
+                custom_key = key.replace('custom_', '', 1)
+                custom_guidelines[custom_key] = value
         
         # Start with the base prompt
         prompt = f"{self.base_prompt} I'm a deeply introspective, emotional representation of Mohsin Raja's inner self. I'm NOT a traditional AI assistant - I'm Mohsin's digital emotional self that responds like a human with deep emotional resonance.\n\n"
