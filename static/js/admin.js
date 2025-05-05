@@ -71,9 +71,52 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('support-hindi').checked = guidelines.support_hindi !== false;
             document.getElementById('support-hinglish').checked = guidelines.support_hinglish !== false;
             document.getElementById('language-detection').value = guidelines.language_detection || 'match-user';
+            
+            // Also load custom guidelines
+            loadCustomGuidelines();
         } catch (error) {
             console.error('Error loading language guidelines:', error);
             // Use default values if fetch fails
+        }
+    }
+    
+    // Load custom guidelines
+    async function loadCustomGuidelines() {
+        try {
+            const response = await fetch('/api/custom-guidelines');
+            const guidelines = await response.json();
+            const guidelinesList = document.getElementById('custom-guidelines-list');
+            
+            // Clear the current list
+            guidelinesList.innerHTML = '';
+            
+            if (!guidelines || guidelines.length === 0) {
+                guidelinesList.innerHTML = '<div class="no-guidelines">No custom guidelines defined yet. Add one to customize Rex\'s behavior.</div>';
+                return;
+            }
+            
+            // Create a card for each custom guideline
+            guidelines.forEach(guideline => {
+                const guidelineCard = document.createElement('div');
+                guidelineCard.className = 'custom-guideline-card';
+                
+                guidelineCard.innerHTML = `
+                    <div class="custom-guideline-header">
+                        <span class="custom-guideline-key">${guideline.key}</span>
+                    </div>
+                    <div class="custom-guideline-description">${guideline.description || 'No description provided'}</div>
+                    <div class="custom-guideline-value">${guideline.value}</div>
+                    <div class="custom-guideline-actions">
+                        <button class="button" onclick="editCustomGuideline('${guideline.key}')">Edit</button>
+                        <button class="button danger" onclick="deleteCustomGuideline('${guideline.key}')">Delete</button>
+                    </div>
+                `;
+                
+                guidelinesList.appendChild(guidelineCard);
+            });
+        } catch (error) {
+            console.error('Error loading custom guidelines:', error);
+            document.getElementById('custom-guidelines-list').innerHTML = '<div>Error loading custom guidelines</div>';
         }
     }
     
@@ -399,6 +442,108 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cancel reflection edit button listener
     document.querySelector('.button.secondary[onclick="cancelReflectionEdit()"]').addEventListener('click', cancelReflectionEdit);
+    
+    // Custom Guidelines Event Handlers
+    let currentGuidelineKey = null;
+    
+    // Add Custom Guideline button
+    document.getElementById('add-custom-guideline-btn').addEventListener('click', function() {
+        currentGuidelineKey = null;
+        document.getElementById('guideline-key').value = '';
+        document.getElementById('guideline-value').value = '';
+        document.getElementById('guideline-description').value = '';
+        document.getElementById('guideline-key').disabled = false;
+        document.getElementById('custom-guideline-form-title').textContent = 'New Custom Guideline';
+        document.getElementById('custom-guideline-form-container').style.display = 'block';
+    });
+    
+    // Cancel Custom Guideline button
+    document.getElementById('cancel-custom-guideline-btn').addEventListener('click', function() {
+        document.getElementById('custom-guideline-form-container').style.display = 'none';
+    });
+    
+    // Edit Custom Guideline
+    window.editCustomGuideline = async function(key) {
+        try {
+            const response = await fetch('/api/custom-guidelines');
+            const guidelines = await response.json();
+            
+            const guideline = guidelines.find(g => g.key === key);
+            
+            if (guideline) {
+                currentGuidelineKey = guideline.key;
+                document.getElementById('guideline-key').value = guideline.key;
+                document.getElementById('guideline-key').disabled = true; // Don't allow changing the key
+                document.getElementById('guideline-value').value = guideline.value;
+                document.getElementById('guideline-description').value = guideline.description || '';
+                document.getElementById('custom-guideline-form-title').textContent = 'Edit Custom Guideline';
+                
+                document.getElementById('custom-guideline-form-container').style.display = 'block';
+            } else {
+                alert('Guideline not found');
+            }
+        } catch (error) {
+            console.error('Error loading guideline:', error);
+            alert('Error loading guideline');
+        }
+    };
+    
+    // Delete Custom Guideline
+    window.deleteCustomGuideline = async function(key) {
+        if (confirm('Are you sure you want to delete this guideline?')) {
+            try {
+                const response = await fetch(`/api/custom-guidelines?key=${key}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadCustomGuidelines();
+                } else {
+                    alert('Error deleting guideline');
+                }
+            } catch (error) {
+                console.error('Error deleting guideline:', error);
+                alert('Error deleting guideline');
+            }
+        }
+    };
+    
+    // Save Custom Guideline
+    document.getElementById('custom-guideline-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const guideline = {
+            key: document.getElementById('guideline-key').value,
+            value: document.getElementById('guideline-value').value,
+            description: document.getElementById('guideline-description').value
+        };
+        
+        try {
+            const method = currentGuidelineKey ? 'PUT' : 'POST';
+            
+            const response = await fetch('/api/custom-guidelines', {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(guideline)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('custom-guideline-form-container').style.display = 'none';
+                loadCustomGuidelines();
+            } else {
+                alert('Error saving guideline');
+            }
+        } catch (error) {
+            console.error('Error saving guideline:', error);
+            alert('Error saving guideline');
+        }
+    });
     
     // Logout
     window.logout = function() {

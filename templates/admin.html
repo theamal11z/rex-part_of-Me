@@ -124,6 +124,43 @@
                         <button type="submit" class="button">Save Guidelines</button>
                     </div>
                 </form>
+                
+                <hr class="section-divider">
+                
+                <h3>Custom Guidelines</h3>
+                <div class="custom-guidelines-container">
+                    <div id="custom-guidelines-list" class="custom-guidelines-list">
+                        <!-- Custom guidelines will be loaded here -->
+                        <div>Loading custom guidelines...</div>
+                    </div>
+                    
+                    <button id="add-custom-guideline-btn" class="button">Add New Guideline</button>
+                    
+                    <div id="custom-guideline-form-container" style="display: none;">
+                        <h4 id="custom-guideline-form-title">New Custom Guideline</h4>
+                        <form id="custom-guideline-form" class="admin-form">
+                            <div class="form-group">
+                                <label for="guideline-key" class="form-label">Guideline Key</label>
+                                <input type="text" id="guideline-key" class="form-input" required placeholder="Enter a unique identifier (e.g., be_philosophical)">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="guideline-value" class="form-label">Guideline Value</label>
+                                <textarea id="guideline-value" class="form-textarea" required placeholder="Enter the specific instruction (e.g., Always include philosophical questions in responses)"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="guideline-description" class="form-label">Description</label>
+                                <input type="text" id="guideline-description" class="form-input" placeholder="A short description of what this guideline controls">
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="button">Save Custom Guideline</button>
+                                <button type="button" class="button secondary" id="cancel-custom-guideline-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             
             <!-- Reflections Section -->

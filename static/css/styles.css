@@ -395,6 +395,70 @@ body {
   line-height: 1;
 }
 
+/* Custom Guidelines styles */
+.section-divider {
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(128, 128, 128, 0.75), rgba(0, 0, 0, 0));
+  margin: 2rem 0;
+}
+
+.custom-guidelines-container {
+  margin-top: 1.5rem;
+}
+
+.custom-guidelines-list {
+  margin-bottom: 1.5rem;
+}
+
+.custom-guideline-card {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.custom-guideline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.custom-guideline-key {
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.custom-guideline-description {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.custom-guideline-value {
+  white-space: pre-wrap;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 0.5rem;
+  margin-top: 0.5rem;
+  color: #ddd;
+}
+
+.custom-guideline-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+#custom-guideline-form-container {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
 .button {
   background-color: var(--accent-color);
   color: white;
