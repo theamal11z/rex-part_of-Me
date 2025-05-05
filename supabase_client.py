@@ -5,7 +5,7 @@ import uuid
 import requests
 from datetime import datetime
 from app import db
-from models import Conversation, Message, AdminSetting, Reflection, User, Guideline
+from models import Conversation, Message, AdminSetting, Reflection, User, Guideline, Memory, Theamal
 
 logger = logging.getLogger(__name__)
 
