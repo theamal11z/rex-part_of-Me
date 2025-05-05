@@ -16,6 +16,11 @@ class GeminiClient:
 You are NOT a typical AI assistant - you are a deeply emotional, philosophical representation of Mohsin's inner voice.
 You are introspective, vulnerable, and thoughtful in your responses.
 You speak directly as Mohsin in the first person."""
+        
+        # Cache for memories and theamal entries
+        self._memories_cache = None
+        self._theamal_cache = None
+        self._is_theamal_active = False
     
     def generate_response(
         self, 
@@ -320,6 +325,117 @@ You speak directly as Mohsin in the first person."""
             }
             logger.warning("Using default guidelines due to database error")
             return default_guidelines
+    
+    def _get_memories(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
+        """
+        Get memories from the database with caching support.
+        
+        Args:
+            force_refresh: If True, bypass cache and get fresh data
+            
+        Returns:
+            List of memory dictionaries
+        """
+        # Use cached memories if available and not forcing refresh
+        if self._memories_cache is not None and not force_refresh:
+            logger.debug("Using cached memories")
+            return self._memories_cache
+            
+        try:
+            # Import here to avoid circular imports
+            from app import db
+            from models import Memory
+            
+            memories = []
+            db_memories = Memory.query.order_by(Memory.importance.desc()).all()
+            
+            for memory in db_memories:
+                memories.append({
+                    "id": memory.id,
+                    "title": memory.title,
+                    "content": memory.content,
+                    "category": memory.category,
+                    "importance": memory.importance
+                })
+            
+            logger.debug(f"Retrieved {len(memories)} memories from database")
+            
+            # Cache the memories
+            self._memories_cache = memories
+            return memories
+            
+        except Exception as e:
+            logger.error(f"Error retrieving memories: {e}")
+            return []
+    
+    def _get_active_theamal(self, force_refresh: bool = False) -> Dict[str, Any]:
+        """
+        Get active theamal entries from the database.
+        
+        Args:
+            force_refresh: If True, bypass cache and get fresh data
+            
+        Returns:
+            Dictionary with Theamal data if active, empty dict if no active Theamal
+        """
+        # Use cached theamal if available and not forcing refresh
+        if self._theamal_cache is not None and not force_refresh:
+            logger.debug("Using cached theamal entries")
+            return self._theamal_cache
+            
+        try:
+            # Import here to avoid circular imports
+            from app import db
+            from models import Theamal
+            
+            # Get only active theamal entries
+            active_theamals = Theamal.query.filter_by(active=True).order_by(Theamal.importance.desc()).all()
+            
+            theamal_data = []
+            for entry in active_theamals:
+                theamal_data.append({
+                    "id": entry.id,
+                    "title": entry.title,
+                    "content": entry.content,
+                    "personality_trait": entry.personality_trait,
+                    "importance": entry.importance
+                })
+            
+            if theamal_data:
+                self._is_theamal_active = True
+                logger.debug(f"Retrieved {len(theamal_data)} active Theamal entries")
+            else:
+                self._is_theamal_active = False
+                logger.debug("No active Theamal entries found")
+            
+            # Cache the theamal data
+            self._theamal_cache = theamal_data
+            return theamal_data
+            
+        except Exception as e:
+            logger.error(f"Error retrieving Theamal entries: {e}")
+            self._is_theamal_active = False
+            return []
+            
+    def _check_for_theamal_activation(self, message: str) -> bool:
+        """
+        Check if the user is trying to activate Theamal mode.
+        
+        Args:
+            message: The user's message
+            
+        Returns:
+            True if Theamal should be activated, False otherwise
+        """
+        activation_phrases = ["enable theamal", "activate theamal", "theamal mode", "switch to theamal"]
+        message_lower = message.lower()
+        
+        for phrase in activation_phrases:
+            if phrase in message_lower:
+                logger.info("Theamal activation phrase detected")
+                return True
+                
+        return False
     
     def _build_prompt(
         self, 
