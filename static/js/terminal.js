@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let isWaitingForResponse = false;
     let currentReflectionType = 'microblog';
     
-    // Initial welcome message
+    // Initial welcome message with a more natural greeting
     addSystemMessage("Welcome to Rex - Mohsin Raja's digital emotional self");
-    addSystemMessage("What's your name? I'll remember our conversation for next time.");
+    addSystemMessage("I'd love to hear what's on your mind today. Feel free to share your thoughts, questions, or just say hello.");
     
     // Focus the input field when the page loads
     terminalInput.focus();
@@ -35,54 +35,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Handle first message as name if no name has been provided yet
-            if (!hasProvidedName) {
-                // Extract name from message - either from an introduction or use the whole message
-                let extractedName = "";
-                const nameMatch = message.match(/(?:i am|i'm|my name is|call me) (\w+)/i);
-                
-                if (nameMatch && nameMatch[1]) {
-                    // Name found in structured introduction
-                    extractedName = nameMatch[1];
-                } else if (message.split(" ").length <= 2) {
-                    // Use the entire message as name if it's just 1-2 words
-                    extractedName = message;
-                }
-                
-                if (extractedName) {
-                    // Capitalize first letter and use as username
-                    username = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
-                    hasProvidedName = true;
-                    
-                    // Add a confirmation after the message
-                    addUserMessage(message);
-                    addSystemMessage(`Thanks, ${username}! I'll remember our conversation for next time.`);
-                } else {
-                    // Could not extract a name
-                    addUserMessage(message);
-                    addSystemMessage("I'm not sure I caught your name. Could you tell me just your name?");
-                    terminalInput.value = '';
-                    return; // Don't process this message further
-                }
+            // Process the message first
+            addUserMessage(message);
+            
+            // Try to extract a name from the message using enhanced patterns
+            const namePatterns = [
+                // Direct introductions
+                /(?:i am|i'm|my name is|call me|this is) (\w+)/i,
+                // Common Indian/South Asian names that might appear at start
+                /^(amit|anil|arjun|deepak|farhan|karan|mohammad|priya|raj|rahul|rohit|sanjay|sumit|vikram|vivek)\b/i,
+                /^(aarav|aditi|ananya|aryan|divya|ishaan|kavya|meera|neha|nikhil|riya|rohan|sahil|tanvi|yash)\b/i,
+                // Single word name responses
+                /^([A-Z][a-z]{2,15})$/i  // Likely a name if it's a 3-15 letter word by itself
+            ];
+            
+            // Try to detect a name naturally
+            let extractedName = null;
+            
+            // Check for single-word response which could be just a name
+            if (message.split(" ").length === 1 && message.length > 1) {
+                extractedName = message.trim();
             } else {
-                // If the user changes their name later in the conversation
-                const nameMatch = message.match(/(?:i am|i'm|my name is|call me) (\w+)/i);
-                if (nameMatch && nameMatch[1]) {
-                    const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
-                    if (newName !== username) {
-                        username = newName;
-                        addUserMessage(message);
-                        addSystemMessage(`I'll remember you as ${username} from now on.`);
-                        terminalInput.value = '';
-                        
-                        // Reset conversation to start fresh with new name
-                        conversationId = null;
-                        return; // Don't process this message further
+                // Try each pattern
+                for (const pattern of namePatterns) {
+                    const match = message.match(pattern);
+                    if (match && match[1]) {
+                        extractedName = match[1];
+                        break;
                     }
                 }
+            }
+            
+            if (extractedName && (!username || username === "friend")) {
+                // New name detected - capitalize first letter
+                const newName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
                 
-                // Regular message processing
-                addUserMessage(message);
+                // If this is a different name from what we have, update it
+                if (newName !== username) {
+                    username = newName;
+                    
+                    // We silently store the username without explicitly acknowledging it
+                    // This makes the conversation flow more naturally
+                    
+                    // Only if this is the first name we've detected, we'll use it in the next response
+                    if (!hasProvidedName) {
+                        hasProvidedName = true;
+                    }
+                    
+                    // If we suddenly have a new name mid-conversation, reset the conversation
+                    if (hasProvidedName && conversationId) {
+                        conversationId = null;
+                    }
+                }
+            } else if (!username) {
+                // Default username if we couldn't detect one
+                username = "friend";
             }
             
             terminalInput.value = '';

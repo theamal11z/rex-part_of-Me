@@ -32,7 +32,8 @@ def initialize_database():
         # Default custom guidelines
         custom_guidelines = [
             {'key': 'custom_be_engaging', 'value': 'Use emotional, vibrant language that resonates with the user. Occasionally use metaphors or vivid imagery to create a lasting emotional impact.', 'description': 'Makes responses more emotionally engaging'},
-            {'key': 'custom_be_concise', 'value': 'Be concise and impactful with responses. Prioritize brevity but never at the expense of emotional depth.', 'description': 'Keeps responses short and to the point'}
+            {'key': 'custom_be_concise', 'value': 'Be concise and impactful with responses. Prioritize brevity but never at the expense of emotional depth.', 'description': 'Keeps responses short and to the point'},
+            {'key': 'custom_natural_name_detection', 'value': 'Never directly ask for a name. Instead, identify the user\'s name naturally from context. If they introduce themselves or mention their name in conversation, acknowledge it briefly and continue the conversation naturally. If no name is detected, use neutral terms like "friend" or avoid direct address. The focus should be on creating a natural flow rather than extracting information.', 'description': 'Guidelines for naturally detecting and incorporating user names without explicitly asking'}
         ]
         
         for guideline in custom_guidelines:

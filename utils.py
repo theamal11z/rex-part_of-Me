@@ -51,21 +51,32 @@ def detect_emotion(text: str) -> str:
 
 def extract_username(text: str) -> Optional[str]:
     """
-    Try to extract a username from the text.
+    Try to extract a username from the text in a more natural way.
+    This function attempts to find names in conversation context without direct questioning.
     """
-    # Look for "I am [name]" or "my name is [name]" patterns
+    # Enhanced patterns to catch more natural introductions
     patterns = [
-        r"i am (\w+)",
-        r"my name is (\w+)",
-        r"i'm (\w+)",
-        r"call me (\w+)",
-        r"this is (\w+)"
+        # Direct introductions
+        r"(?:i am|i'm|my name is|call me|this is) (\w+)",
+        # Common Indian/South Asian names with recognition that these might appear at start
+        r"^(amit|anil|arjun|deepak|farhan|karan|mohammad|priya|raj|rahul|rohit|sanjay|sumit|vikram|vivek)\b",
+        r"^(aarav|aditi|ananya|aryan|divya|ishaan|kavya|meera|neha|nikhil|riya|rohan|sahil|tanvi|yash)\b",
+        r"^(akhil|anjali|arjun|bhavya|dhruv|gauri|jatin|kamal|lakshmi|manish|nandini|pallavi|rajiv|sunil|vivek)\b",
+        # General first-word-as-name for short messages that might be name responses
+        r"^([A-Z][a-z]{2,15})$"  # Likely a name if it's a capitalized 3-15 letter word by itself
     ]
     
+    # Check common greeting responses where people often give just their name
+    if len(text.split()) == 1 and text.strip().istitle() and len(text.strip()) > 1:
+        return text.strip()
+        
+    # Try each pattern in sequence
     for pattern in patterns:
-        match = re.search(pattern, text.lower())
+        match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            return match.group(1).capitalize()
+            name = match.group(1)
+            # Capitalize the name properly
+            return name.strip().capitalize()
     
     return None
 
