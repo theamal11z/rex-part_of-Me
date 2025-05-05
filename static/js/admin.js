@@ -9,13 +9,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const reflectionsList = document.getElementById('reflections-list');
     const hinglishRatioSlider = document.getElementById('hinglish-ratio');
     const hinglishRatioValue = document.getElementById('hinglish-ratio-value');
+    const memoryForm = document.getElementById('memory-form');
+    const memoriesList = document.getElementById('memories-list');
+    const memoryImportanceSlider = document.getElementById('memory-importance');
+    const memoryImportanceValue = document.getElementById('memory-importance-value');
+    const theamalForm = document.getElementById('theamal-form');
+    const theamalList = document.getElementById('theamal-list');
+    const theamalImportanceSlider = document.getElementById('theamal-importance');
+    const theamalImportanceValue = document.getElementById('theamal-importance-value');
     
     let currentReflectionId = null;
+    let currentMemoryId = null;
+    let currentTheamalId = null;
     
     // Initialize the Hinglish ratio slider
     if (hinglishRatioSlider && hinglishRatioValue) {
         hinglishRatioSlider.addEventListener('input', function() {
             hinglishRatioValue.textContent = this.value + '%';
+        });
+    }
+    
+    // Initialize the Memory importance slider
+    if (memoryImportanceSlider && memoryImportanceValue) {
+        memoryImportanceSlider.addEventListener('input', function() {
+            memoryImportanceValue.textContent = this.value;
+        });
+    }
+    
+    // Initialize the Theamal importance slider
+    if (theamalImportanceSlider && theamalImportanceValue) {
+        theamalImportanceSlider.addEventListener('input', function() {
+            theamalImportanceValue.textContent = this.value;
         });
     }
     
@@ -49,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadLanguageGuidelines();
             } else if (targetSection === 'reflections-section') {
                 loadReflections();
+            } else if (targetSection === 'memories-section') {
+                loadMemories();
+            } else if (targetSection === 'theamal-section') {
+                loadTheamal();
             }
         });
     });
@@ -562,3 +590,159 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     };
 });
+
+    // Load memories
+    async function loadMemories() {
+        try {
+            const response = await fetch("/api/memories");
+            const memories = await response.json();
+            
+            // Clear the list
+            memoriesList.innerHTML = "";
+            
+            if (memories.length === 0) {
+                memoriesList.innerHTML = "<div>No memories found</div>";
+                return;
+            }
+            
+            // Add each memory
+            memories.forEach(memory => {
+                const div = document.createElement("div");
+                div.className = "reflection-card";
+                
+                const date = new Date(memory.updated_at).toLocaleDateString();
+                
+                div.innerHTML = `
+                    <div class="reflection-title">${memory.title}</div>
+                    <div class="reflection-meta">
+                        <div>${memory.category} • Importance: ${memory.importance}</div>
+                        <div>${date}</div>
+                    </div>
+                    <div class="reflection-content">${memory.content.substring(0, 100)}${memory.content.length > 100 ? "..." : ""}</div>
+                    <div class="reflection-actions">
+                        <button class="button" onclick="editMemory(${memory.id})">Edit</button>
+                        <button class="button danger" onclick="deleteMemory(${memory.id})">Delete</button>
+                    </div>
+                `;
+                
+                memoriesList.appendChild(div);
+            });
+        } catch (error) {
+            console.error("Error loading memories:", error);
+            memoriesList.innerHTML = "<div>Error loading memories</div>";
+        }
+    }
+    
+    // New memory
+    window.newMemory = function() {
+        currentMemoryId = null;
+        document.getElementById("memory-title").value = "";
+        document.getElementById("memory-content").value = "";
+        document.getElementById("memory-category").value = "childhood";
+        document.getElementById("memory-importance").value = 3;
+        document.getElementById("memory-importance-value").textContent = "3";
+        document.getElementById("memory-form-title").textContent = "New Memory";
+        
+        // Display the form container and hide the list container
+        document.getElementById("memory-list-container").style.display = "none";
+        document.getElementById("memory-form-container").style.display = "block";
+    };
+    
+    // Button event listeners
+    document.getElementById("new-memory-btn").addEventListener("click", window.newMemory);
+    
+    // Edit memory
+    window.editMemory = async function(id) {
+        try {
+            const response = await fetch("/api/memories");
+            const memories = await response.json();
+            
+            const memory = memories.find(m => m.id === id);
+            
+            if (memory) {
+                currentMemoryId = memory.id;
+                document.getElementById("memory-title").value = memory.title;
+                document.getElementById("memory-content").value = memory.content;
+                document.getElementById("memory-category").value = memory.category;
+                document.getElementById("memory-importance").value = memory.importance;
+                document.getElementById("memory-importance-value").textContent = memory.importance;
+                document.getElementById("memory-form-title").textContent = "Edit Memory";
+                
+                // Display the form container and hide the list container
+                document.getElementById("memory-list-container").style.display = "none";
+                document.getElementById("memory-form-container").style.display = "block";
+            }
+        } catch (error) {
+            console.error("Error loading memory for edit:", error);
+            alert("Error loading memory for edit");
+        }
+    };
+    
+    // Delete memory
+    window.deleteMemory = async function(id) {
+        if (confirm("Are you sure you want to delete this memory?")) {
+            try {
+                const response = await fetch(`/api/memory/${id}`, {
+                    method: "DELETE"
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadMemories();
+                } else {
+                    alert("Error deleting memory");
+                }
+            } catch (error) {
+                console.error("Error deleting memory:", error);
+                alert("Error deleting memory");
+            }
+        }
+    };
+    
+    // Cancel memory edit
+    document.getElementById("cancel-memory-btn").addEventListener("click", function() {
+        document.getElementById("memory-list-container").style.display = "block";
+        document.getElementById("memory-form-container").style.display = "none";
+    });
+    
+    // Save memory
+    if (memoryForm) {
+        memoryForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const memoryData = {
+                title: document.getElementById("memory-title").value,
+                content: document.getElementById("memory-content").value,
+                category: document.getElementById("memory-category").value,
+                importance: parseInt(document.getElementById("memory-importance").value)
+            };
+            
+            if (currentMemoryId) {
+                memoryData.id = currentMemoryId;
+            }
+            
+            try {
+                const response = await fetch("/api/memory", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(memoryData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById("memory-list-container").style.display = "block";
+                    document.getElementById("memory-form-container").style.display = "none";
+                    loadMemories();
+                } else {
+                    alert("Error saving memory");
+                }
+            } catch (error) {
+                console.error("Error saving memory:", error);
+                alert("Error saving memory");
+            }
+        });
+    }
